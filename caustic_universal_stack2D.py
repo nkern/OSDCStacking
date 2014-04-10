@@ -10,7 +10,7 @@ universal:
 ## Import Modules ##
 import CausticMass as cm
 import numpy as np
-import astropy.io.fits as pyfits
+import astropy.io.fits as fits
 import random
 from scipy import weave
 from scipy.weave import converters
@@ -31,11 +31,11 @@ class universal:
 	def load_halos(self):
 		'''This function loads halo data and makes cosmology corrections'''
 		if self.small_set == True:
-			HaloID = np.loadtxt(self.root+'/nkern/OSDCStacking/biglosclusters.csv', delimiter=',', dtype='string', usecols=(0,), unpack=True)
+			HaloID = np.loadtxt(self.root+'/nkern/Caustic/biglosclusters.csv', delimiter=',', dtype='string', usecols=(0,), unpack=True)
 			HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/nkern/Caustic/biglosclusters.csv', delimiter=',', dtype='float', usecols=(9,10,11,12,13,14), unpack=True)
 			SRAD,ESRAD,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/nkern/Caustic/Millbig_concentrations.phys_phys.csv', delimiter=',', dtype='float', usecols=(1,2,5,7,9,12), unpack=True)
 		else:
-			HaloID,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/nkern/Large_Halo_Set/halos.csv',usecols=(0,8,9,10,11,12,13,16,5,7,4),delimiter=',',unpack=True)
+			HaloID,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/nkern/Millennium/Large_Halo_Set/halos.csv',usecols=(0,8,9,10,11,12,13,16,5,7,4),delimiter=',',unpack=True)
 			M_crit200 *= 1e10
 			HaloID = np.array(HaloID,int)
 			SRAD,ESRAD=np.ones(HaloID.size),np.ones(HaloID.size)
@@ -111,12 +111,12 @@ class universal:
 		# load galaxy data
 		if self.small_set == True:
 			# 100 Halo Sample	
-			f = pyfits.open(self.root+'/giffordw/Millenium/30Mpchalos/'+haloid+'.'+self.data_set+'.fits')
+			f = fits.open(self.root+'/giffordw/Millenium/30Mpchalos/'+haloid+'.'+self.data_set+'.fits')
 			data = f[1].data
 			gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(13),data.field(17),data.field(18),data.field(19),data.field(20),data.field(21),data.field(22),data.field(62),data.field(63),data.field(64)
 		else:
 			# 2,000 Halo Sample
-			data = pyfits.getdata(self.root+'/nkern/Large_Halo_Set/Halo_'+str(haloid)+'.Guo2010.fits')
+			data = fits.getdata(self.root+'/nkern/Millennium/Large_Halo_Set/Halo_'+str(haloid)+'.Guo2010.fits')
 
 			gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(3),data.field(6),data.field(7),data.field(8),data.field(9),data.field(10),data.field(11),data.field(14),data.field(15),data.field(16)
 
@@ -233,24 +233,24 @@ class universal:
 
 		return r, v, new_pos
 
-	def limit_gals(self,r,v,gmags,rmags,imags,r200,hvd):
+	def limit_gals(self,r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,r200,hvd):
 		''' Sort data by magnitude, and elimite values outside phase space limits '''
 		# Sort by ascending r magnitude (bright to dim)
 		sorts = np.argsort(rmags)
-		r,v,gmags,rmags,imags = r[sorts],v[sorts],gmags[sorts],rmags[sorts],imags[sorts]
+		r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags = r[sorts],v[sorts],en_gal_id[sorts],en_clus_id[sorts],ln_gal_id[sorts],gmags[sorts],rmags[sorts],imags[sorts]
 
 		# Limit Phase Space
 		sample = np.where( (r < r200*self.r_limit) & (v > -self.v_limit) & (v < self.v_limit) )[0] 
-		r,v,gmags,rmags,imags = r[sample],v[sample],gmags[sample],rmags[sample],imags[sample]
+		r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags = r[sample],v[sample],en_gal_id[sample],en_clus_id[sample],ln_gal_id[sample],gmags[sample],rmags[sample],imags[sample]
 		samp_size = len(sample)
 
 
 		# Eliminate galaxies w/ mag = 99.
 		cut = np.where((gmags!=99)&(rmags!=99)&(imags!=99))[0]
-		r,v,gmags,rmags,imags = r[cut],v[cut],gmags[cut],rmags[cut],imags[cut]
+		r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags = r[cut],v[cut],en_gal_id[cut],en_clus_id[cut],ln_gal_id[cut],gmags[cut],rmags[cut],imags[cut]
 		samp_size = len(cut)
 	
-		return r,v,gmags,rmags,imags,samp_size
+		return r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,samp_size
 
 
 	def Bin_Calc(self,HaloData,varib):
@@ -277,8 +277,58 @@ class universal:
 		return BinData
 
 
+	def mass_mixing(self,HaloID,HaloData,mass_scat):
+		'''
+		This function performs a mass mixing procedure with a given fractional scatter in assumed mass
+		'''
 
-	def ss_get_3d(self,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,gmags,rmags,imags):
+		# Unpack Array
+		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
+		
+		# Create Gaussian distribution about 1 with width mass_scat, length HaloID.size
+		mass_mix = random.lognormal(0,mass_scat,len(HaloID))
+
+		# Apply Mass Scatter
+		M_crit200 *= mass_mix
+
+		# Sort by Descending Mass
+		sort = np.argsort(M_crit200)[::-1]
+		M_crit200 = M_crit200[sort]
+		R_crit200 = R_crit200[sort]
+		Z = Z[sort]
+		SRAD = SRAD[sort]
+		ESRAD = ESRAD[sort]
+		HVD = HVD[sort]
+		HPX = HPX[sort]
+		HPY = HPY[sort]
+		HPZ = HPZ[sort]
+		HVX = HVX[sort]
+		HVY = HVY[sort]
+		HVZ = HVZ[sort]
+		HaloID = HaloID[sort]
+
+		# Re-pack
+		HaloData = np.array([M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
+
+		return HaloID,HaloData
+		
+ 
+	def id_match(self,ID1,ID2,data):
+		'''
+		This function takes two IDs (one-dim arrays) and matches them up by identical value, the conversion being matching ID2 to ID1, then applying the match to data.
+		This means that ID2 and data match in primary key
+		'''
+		sort = np.zeros(len(ID2),int)
+		for i in np.arange(len(sort)):
+			sort[i] = np.where(ID2[i] == ID1)[0][0]
+		
+		ID2 = ID2[sort]
+		data = data.T[sort].T
+
+		return sort,ID2,data			
+
+
+	def mag_get_3d(self,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,gmags,rmags,imags):
 		'''
 		This function retreives the 3D position and velocity data for finalized galaxies in phase spaces for a given Halo.
 		It matches the galaxies using the magnitude as a key, b/c rarely are magnitudes degenerate, however, sometimes they are.
@@ -307,6 +357,38 @@ class universal:
 
 		return gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d
 
+	def get_3d(self,Gal_P,Gal_V,ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j):
+		'''
+		This function recovers the 3D positions and velocities of the galaxies in the ensemble and los phase space.
+		'''
+
+		if self_stack == True:
+			pass
+
+		else:	
+			# Create fully concatenated arrays to draw ensemble data from
+			[BIN_GPX3D,BIN_GPY3D,BIN_GPZ3D] = map(np.concatenate,Gal_P[j*self.line_num:(j+1)*self.line_num].T)
+			[BIN_GVX3D,BIN_GVY3D,BIN_GVZ3D] = map(np.concatenate,Gal_V[j*self.line_num:(j+1)*self.line_num].T)
+
+			# Recover ensemble 3D data	
+			ens_gpx3d,ens_gpy3d,ens_gpz3d = BIN_GPX3D[ens_gal_id],BIN_GPY3D[ens_gal_id],BIN_GPZ3D[ens_gal_id]
+			ens_gvx3d,ens_gvy3d,ens_gvz3d = BIN_GVX3D[ens_gal_id],BIN_GVY3D[ens_gal_id],BIN_GVZ3D[ens_gal_id]
+
+			# Recover line_of_sight 3D data
+			los_gpx3d,los_gpy3d,los_gpz3d = [],[],[]
+			los_gvx3d,los_gvy3d,los_gvz3d = [],[],[]
+			for i,k in zip( np.arange(j*self.line_num,(j+1)*self.line_num), np.arange(self.line_num) ):
+				los_gpx3d.append(Gal_P[i][0][los_gal_id[k]])
+				los_gpy3d.append(Gal_P[i][1][los_gal_id[k]])
+				los_gpz3d.append(Gal_P[i][2][los_gal_id[k]])
+				los_gvx3d.append(Gal_V[i][0][los_gal_id[k]])
+				los_gvy3d.append(Gal_V[i][1][los_gal_id[k]])
+				los_gvz3d.append(Gal_P[i][2][los_gal_id[k]])
+
+			los_gpx3d,los_gpy3d,los_gpz3d = np.array(los_gpx3d),np.array(los_gpy3d),np.array(los_gpz3d)
+			los_gvx3d,los_gvy3d,los_gvz3d = np.array(los_gvx3d),np.array(los_gvy3d),np.array(los_gvz3d)
+
+		return np.array([ens_gpx3d,ens_gpy3d,ens_gpz3d]),np.array([ens_gvx3d,ens_gvy3d,ens_gvz3d]),np.array([los_gpx3d,los_gpy3d,los_gpz3d]),np.array([los_gvx3d,los_gvy3d,los_gvz3d])
 
 
 	def print_varibs(self,varib):
@@ -324,6 +406,8 @@ class universal:
 		print "self_stack		=",varib['self_stack']
 		print "write_data		=",varib['write_data']
 		print "run_los			=",varib['run_los']
+		print "mass_mix		=",varib['mass_mix']
+		print "mass_scat		=",varib['mass_scat']
 		return	
 
 	def print_separation(self,text,type=1):

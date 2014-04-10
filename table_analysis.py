@@ -3,11 +3,66 @@ import matplotlib.pyplot as mp
 import numpy.ma as ma
 import numpy as np
 
-file = open('table_analysis_binstack_run_table2.pkl','rb')
-input = pkl.Unpickler(file)
-data = input.load()
 
-(ENS_MBIAS,ENS_MSCAT,ENS_VBIAS,ENS_VSCAT,LOS_MBIAS,LOS_MSCAT,LOS_VBIAS,LOS_VSCAT,RUN_NUM,GAL_NUM,LINE_NUM,RICH_NUM) = data
+
+class main():
+
+	def load(self,filename='mass_mix/mm_0.05_run_table1/mm_0.05_run_table1_analysis.pkl'):
+		file = open(filename,'rb')
+		input = pkl.Unpickler(file)
+		data = input.load()
+		for a in data:
+			data[a]=data[a].astype('float')
+		return data
+
+
+	def avg_stats(self):
+		'''
+		This function uses load() to load full unique realization of run table data and compute table wide statistics. 
+		It then does this iteratively for multiple realizations, and averages the results.
+		'''
+	
+		data_stem = 'mass_mix/mm_0.05_run_table'
+		data_end = '_analysis.pkl'
+		table_iter = np.array([1])
+		iter_len = np.float(len(table_iter))
+
+		ENS_MBIAS = []
+		ENS_MSCAT = []
+		ENS_VBIAS = []
+		ENS_VSCAT = []
+		for i in table_iter:
+			data = load(filename=data_stem+str(i)+'/'+data_stem+str(i)+data_end)
+			ENS_MBIAS.append(data['ENS_MBIAS'])
+			ENS_MSCAT.append(data['ENS_MSCAT'])
+			ENS_VBIAS.append(data['ENS_VBIAS'])
+			ENS_VSCAT.append(data['ENS_VSCAT'])
+
+		ENS_MBIAS = sum(np.array(ENS_MBIAS))/iter_len
+		ENS_MSCAT = sum(np.array(ENS_MSCAT))/iter_len
+		ENS_VBIAS = sum(np.array(ENS_VBIAS))/iter_len
+		ENS_VSCAT = sum(np.array(ENS_VSCAT))/iter_len
+		RICH_NUM=data['RICH_NUM']
+	
+		names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','RICH_NUM']
+		vals = [ENS_MBIAS,ENS_MSCAT,ENS_VBIAS,ENS_VSCAT,RICH_NUM]
+		data_dict = dict(zip(names,vals))
+
+		return data_dict
+
+	
+
+class nf(float):
+     def __repr__(self):
+         str = '%.1f' % (self.__float__(),)
+         if str[-1]=='0':
+             return '%.0f' % self.__float__()
+         else:
+             return '%.1f' % self.__float__()
+
+
+## Initialize Class
+M = main()
 
 ## add LOS = 1 table data
 los1_mscat = [1.17,0.78,0.63,0.48,0.38,0.31,0.30]
@@ -19,8 +74,11 @@ IND_MBIAS 		= np.array([-.64,-.39,-.16,-.10,-.03,.00,.01,.01])
 IND_MBIAS_ERR 		= np.array([.09,.08,.05,.05,.04,.03,.03,.03])
 ##
 
-raise NameError
+# Load Data
+globals().update(M.load(filename='mass_mix/mm_0.05_run_table1/mm_0.05_run_table1_analysis.pkl'))
 
+raise NameError
+## Individual Cluster Errorbar
 mp.errorbar(IND_RICH,IND_MBIAS,yerr=IND_MBIAS_ERR,lw=2,c='DarkBlue',alpha=.7)
 
 ## ENSEMBLE MASS SCATTER
@@ -113,9 +171,11 @@ axes.set_ylim(-1.,.1)
 axes.locator_params(axis='both',nbins=12)
 ##
 
+
+
+
 ### ENS_MBIAS Density Map
-mp.figure()
-mp.imshow(ENS_MBIAS,cmap='jet')
+mp.matshow(ENS_MBIAS,cmap='jet',vmin=-.15,vmax=.15,alpha=.9)
 cbar = mp.colorbar()
 cbar.set_label('Mass Bias',fontsize=12)
 mp.grid()
@@ -123,11 +183,10 @@ mp.xticks([0,1,2,3,4,5,6],[2,5,10,15,25,50,100])
 mp.yticks([0,1,2,3,4,5,6],[5,10,15,25,50,100,150])
 mp.xlabel('Clusters per Bin (LOS)',fontsize=15)
 mp.ylabel('Galaxies per Cluster (Ngal)',fontsize=15)
-mp.title('Run Table Ensemble Mass Bias Density Plot')
+mp.title("Ensemble Mass Bias")
 
 ### ENS_MSCAT Density Map
-mp.figure()
-mp.imshow(ENS_MSCAT,cmap='jet')
+mp.matshow(ENS_MSCAT,cmap='Paired')#,vmin=0.0,vmax=.40)
 cbar = mp.colorbar()
 cbar.set_label('Mass Scatter',fontsize=12)
 mp.grid()
@@ -135,10 +194,35 @@ mp.xticks([0,1,2,3,4,5,6],[2,5,10,15,25,50,100])
 mp.yticks([0,1,2,3,4,5,6],[5,10,15,25,50,100,150])
 mp.xlabel('Clusters per Bin (LOS)',fontsize=15)
 mp.ylabel('Galaxies per Cluster (Ngal)',fontsize=15)
-mp.title('Run Table Ensemble Mass Scatter Density Plot')
+mp.title("Ensemble Mass Scatter")
 
+### ENS_VBIAS Density Map
+mp.matshow(ENS_VBIAS,cmap='jet',vmin=-.15,vmax=.15)
+cbar = mp.colorbar()
+cbar.set_label('Vel. Disp Bias',fontsize=12)
+mp.grid()
+mp.xticks([0,1,2,3,4,5,6],[2,5,10,15,25,50,100])
+mp.yticks([0,1,2,3,4,5,6],[5,10,15,25,50,100,150])
+mp.xlabel('Clusters per Bin (LOS)',fontsize=15)
+mp.ylabel('Galaxies per Cluster (Ngal)',fontsize=15)
+mp.title("Ensemble Vel. Disp Bias")
 
+### ENS_VSCAT Density Map
+mp.matshow(ENS_VSCAT,cmap='Paired')#,vmin=0.0,vmax=.40)
+cbar = mp.colorbar()
+cbar.set_label('Vel. Disp Scatter',fontsize=14)
+mp.grid()
+mp.xticks(np.arange(7),[2,5,10,15,25,50,100])
+mp.yticks(np.arange(7),[5,10,15,25,50,100,150])
+mp.xlabel('Clusters per Bin (LOS)',fontsize=15)
+mp.ylabel('Galaxies per Cluster (Ngal)',fontsize=15)
+mp.title("Ensemble Vel. Disp Scatter")
 
+### RICH_NUM Contour Map
+levels=np.array([10,25,50,100,200,500,1000,2000,5000],int)
+CS = mp.contour(np.arange(7),np.arange(7),np.array(RICH_NUM,int),levels,colors='Black')
+fmt = dict(zip(CS.levels,np.array(np.array(CS.levels,int),str)))
+mp.clabel(CS,CS.levels,inline=1,fontsize=13,fmt=fmt)
 
 mp.show()
 

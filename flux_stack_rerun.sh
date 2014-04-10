@@ -13,9 +13,9 @@ clus_num=(75 30 15 10 6 3 1)			# Number of Ens Clusters done per instance
 job_num=(14 14 14 14 14 14 21)			# Number of Jobs Submitted
 halo_num=2100					# Number of Halos in Sample
 method_num=0					# Ensemble Build Method
-table_num=3					# Version of entire run table
-data_loc="binstack_run_table"$table_num		# Highest Directory for Data
-write_loc="bs_m0_run"				# Stem of write_loc directory
+table_num=1					# Version of entire run table
+data_loc="mass_mix/mm_0.05_run_table"$table_num	# Highest Directory for Data
+write_loc="mm_m0_run"				# Stem of write_loc directory
 
 ## Check Directory ##
 echo "Loaded Directory is: $data_loc"
@@ -64,6 +64,7 @@ if [ $accept != 'y' ];
 	exit
 fi 
 
+
 ## Begin FLUX Job Submission
 echo "Beginning FLUX job submission..."
 echo "-------------------------------------------"
@@ -109,7 +110,6 @@ do
 
 	# Define Constants
 	let "clus_num=$halo_num/(${job_array[$k]}+1)/${line_num[$k]}"
-	write_loc="bs_m0_run"${cell_num[$k]}
 
 	# Submit FLUX JOB for Ensembles
 	_run_num="$run_num"
@@ -119,14 +119,17 @@ do
 	_method_num="$method_num"
 	_cell_num="${cell_num[$k]}"
 	_data_loc="$data_loc"
-	_write_loc="$write_loc"
-	sed -e "s/@@data_loc@@/$_data_loc/g;s/@@write_loc@@/$_write_loc/g;s/@@run_num@@/$_run_num/g;s/@@clus_num@@/$_clus_num/g;s/@@gal_num@@/$_gal_num/g;s/@@line_num@@/$_line_num/g;s/@@method_num@@/$_method_num/g;s/@@cell_num@@/$_cell_num/g;s/@@table_num@@/$table_num/g;s/@@run_los@@/0/g" < table_flux_stack_pbs_rerun.sh > $_data_loc/$_write_loc/script_rerun.sh
+	_write_loc="$write_loc${cell_num[$k]}"
+
+	sed -e "s/@@write_loc@@/$_write_loc/g;s/@@run_num@@/$_run_num/g;s/@@clus_num@@/$_clus_num/g;s/@@gal_num@@/$_gal_num/g;s/@@line_num@@/$_line_num/g;s/@@method_num@@/$_method_num/g;s/@@cell_num@@/$_cell_num/g;s/@@table_num@@/$table_num/g;s/@@run_los@@/0/g" < table_flux_stack_pbs_rerun.sh > $_data_loc/$_write_loc/script_rerun.sh
 
 	# Change run_los = True if line_num == 100
 	let "a=${cell_num[$k]}%7"
 	if [ $a == 0 ]
 		then
-		sed -e "s/@@data_loc@@/$_data_loc/g;s/@@write_loc@@/$_write_loc/g;s/@@job_array@@/$_job_array/g;s/@@clus_num@@/$_clus_num/g;s/@@gal_num@@/$_gal_num/g;s/@@line_num@@/$_line_num/g;s/@@method_num@@/$_method_num/g;s/@@cell_num@@/$_cell_num/g;s/@@table_num@@/$table_num/g;s/@@run_los@@/1/g" < table_flux_stack_pbs_rerun.sh > $_data_loc/$_write_loc/script_rerun.sh
+
+		sed -e "s/@@write_loc@@/$_write_loc/g;s/@@run_num@@/$_run_num/g;s/@@clus_num@@/$_clus_num/g;s/@@gal_num@@/$_gal_num/g;s/@@line_num@@/$_line_num/g;s/@@method_num@@/$_method_num/g;s/@@cell_num@@/$_cell_num/g;s/@@table_num@@/$table_num/g;s/@@run_los@@/1/g" < table_flux_stack_pbs_rerun.sh > $_data_loc/$_write_loc/script_rerun.sh
+
 	fi
 
 	# Submit Script to FLUX via qsub

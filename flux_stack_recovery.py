@@ -24,11 +24,7 @@ use_flux	= True				# Running on flux or sophie?
 get_los		= True				# Upload Line of Sight Data as well?
 data_loc	= 'binstack_run_table2'		# Parent directory where write_loc lives
 write_loc	= 'ss_m1_run1'			# Which directory within data_loc to load ensembles from?
-
-if use_flux == True:
-	root = str('/nfs/christoq_ls')
-else:
-	root = str('/n/Christoq1')
+root		= '/glusterfs/users/caustics1/'
 
 ## Constants ##
 warnings.filterwarnings("module",message="Warning: converting a masked element to nan.")
@@ -40,8 +36,7 @@ class Recover(universal):
 
 	def __init__(self):
 		pass
-	
-	def recover(self,write_loc=write_loc,raw_data=False,ss=True,go_global=True,ens_only=True,data_loc=None):
+	def recover(self,write_loc=write_loc,raw_data=False,ss=True,mm=False,go_global=True,ens_only=True,data_loc=None):
 
 		"""
 		This function uploads the pickle files from directory stack_data and configures them into multi dimensional arrays.
@@ -56,28 +51,33 @@ class Recover(universal):
 		## Load Data ##
 		# Make wanted variables global
 		self.ss = ss
+		self.mm = mm
 
 		# Create them as lists
 		ENS_CAUMASS,ENS_CAUMASS_EST,ENS_CAUSURF,ENS_NFWSURF,LOS_CAUMASS,LOS_CAUMASS_EST,LOS_CAUSURF,LOS_NFWSURF = [],[],[],[],[],[],[],[]
 		ENS_R,ENS_V,ENS_GMAGS,ENS_RMAGS,ENS_IMAGS,LOS_R,LOS_V,LOS_GMAGS,LOS_RMAGS,LOS_IMAGS,ENS_HVD,LOS_HVD = [],[],[],[],[],[],[],[],[],[],[],[]
-		SAMS,PRO_POS,GPX3D,GPY3D,GPZ3D,GVX3D,GVY3D,GVZ3D = [],[],[],[],[],[],[],[]
+		SAMS,PRO_POS,ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = [],[],[],[],[],[]
+		ENS_GAL_ID,LOS_GAL_ID,ENS_CLUS_ID = [],[],[]
 
 		# Initialization step 
 		if data_loc==None:	
-			if self.ss:	data_loc = 'selfstack_run_table'
+			if self.ss:	data_loc = 'old_selfstack_run_table'
 			else:	data_loc = 'binstack_run_table2'
 
-		pkl_file = open(root+'/nkern/Stacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(0)+'_Data.pkl','rb')
+		pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(0)+'_Data.pkl','rb')
 		input = pkl.Unpickler(pkl_file)
 		stack_data 			= input.load()
 		varib				= input.load()
+		run_dict			= input.load()
 
+		
 		self.__dict__.update(varib)
 		self.U = universal(varib)
 		if self.ss:	self.halo_range = range(2124)
 		else:	self.halo_range = range(varib['halo_num']/varib['line_num'])
 
-		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = stack_data
+		ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,ens_gp3d,ens_gv3d,los_gp3d,los_gv3d = stack_data
+
 
 		# Append stack_data to major lists
 		ENS_R.append(ens_r)
@@ -102,12 +102,14 @@ class Recover(universal):
 		LOS_NFWSURF.append(los_nfwsurf)
 		SAMS.append(sample_size)
 		PRO_POS.append(pro_pos)
-		GPX3D.append(gpx3d)
-		GPY3D.append(gpy3d)
-		GPZ3D.append(gpz3d)
-		GVX3D.append(gvx3d)
-		GVY3D.append(gvy3d)
-		GVZ3D.append(gvz3d)
+		ENS_GP3D.append(ens_gp3d)
+		ENS_GV3D.append(ens_gv3d)
+		LOS_GP3D.append(los_gp3d)
+		LOS_GV3D.append(los_gv3d)
+		ENS_GAL_ID.append(ens_gal_id)
+		LOS_GAL_ID.append(los_gal_id)
+		ENS_CLUS_ID.append(ens_clus_id)
+		
 
 		# Loop over ensembles
 		j = 0
@@ -116,12 +118,12 @@ class Recover(universal):
 			sys.stdout.write("Progress... "+str(j)+"\r")
 			sys.stdout.flush()
 			j += 1
-			pkl_file = open(root+'/nkern/Stacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(i)+'_Data.pkl','rb')
+			pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(i)+'_Data.pkl','rb')
 			input = pkl.Unpickler(pkl_file)
 			stack_data = input.load()
 
 			# Unpack Variables
-			ens_r,ens_v,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = stack_data
+			ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,ens_gp3d,ens_gv3d,los_gp3d,los_gv3d = stack_data
 
 			# Append stack_data to major lists
 			ENS_R.append(ens_r)
@@ -146,12 +148,14 @@ class Recover(universal):
 			LOS_NFWSURF.append(los_nfwsurf)
 			SAMS.append(sample_size)
 			PRO_POS.append(pro_pos)
-			GPX3D.append(gpx3d)
-			GPY3D.append(gpy3d)
-			GPZ3D.append(gpz3d)
-			GVX3D.append(gvx3d)
-			GVY3D.append(gvy3d)
-			GVZ3D.append(gvz3d)
+			ENS_GP3D.append(ens_gp3d)
+			ENS_GV3D.append(ens_gv3d)
+			LOS_GP3D.append(los_gp3d)
+			LOS_GV3D.append(los_gv3d)
+			ENS_GAL_ID.append(ens_gal_id)
+			LOS_GAL_ID.append(los_gal_id)
+			ENS_CLUS_ID.append(ens_clus_id)
+
 
 		print ''
 
@@ -171,19 +175,21 @@ class Recover(universal):
 		LOS_GMAGS = np.array(LOS_GMAGS)
 		LOS_RMAGS = np.array(LOS_RMAGS)
 		LOS_IMAGS = np.array(LOS_IMAGS)
-		LOS_HVD = np.array(LOS_HVD)
-		LOS_CAUMASS = np.array(LOS_CAUMASS)
-		LOS_CAUMASS_EST = np.array(LOS_CAUMASS_EST)
-		LOS_CAUSURF = np.array(LOS_CAUSURF)
-		LOS_NFWSURF = np.array(LOS_NFWSURF)
+		LOS_HVD = np.array(LOS_HVD,object)
+		LOS_CAUMASS = np.array(LOS_CAUMASS,object)
+		LOS_CAUMASS_EST = np.array(LOS_CAUMASS_EST,object)
+		LOS_CAUSURF = np.array(LOS_CAUSURF,object)
+		LOS_NFWSURF = np.array(LOS_NFWSURF,object)
 		SAMS = np.array(SAMS)
 		PRO_POS = np.array(PRO_POS)
-		GPX3D = np.array(GPX3D)
-		GPY3D = np.array(GPY3D)
-		GPZ3D = np.array(GPZ3D)
-		GVX3D = np.array(GVX3D)
-		GVY3D = np.array(GVY3D)
-		GVZ3D = np.array(GVZ3D)
+		ENS_GP3D = np.array(ENS_GP3D)
+		ENS_GV3D = np.array(ENS_GV3D)
+		LOS_GP3D = np.array(LOS_GP3D)
+		LOS_GV3D = np.array(LOS_GV3D)
+		ENS_GAL_ID = np.array(ENS_GAL_ID)
+		LOS_GAL_ID = np.array(LOS_GAL_ID)
+		ENS_CLUS_ID = np.array(ENS_CLUS_ID)
+
 
 		## Get Halo Data
 		# Load and Sort Halos by Mass
@@ -197,13 +203,17 @@ class Recover(universal):
 
 		# Make Bin Arrays if ss == False
 		if self.ss == False:
-			BinData = self.U.Bin_Calc(HaloData[0:6],varib)
+			BinData = HaloData[0:6]
+			if mm == True:
+				BinData = run_dict['HaloData_match'][0:6]
+			BinData = self.U.Bin_Calc(BinData,varib)
 			BIN_M200,BIN_R200,BIN_HVD = BinData
 
 		if raw_data == True:
 			# Return to Namespaces depending on go_global
-			names = ['varib','HaloID','Halo_P','Halo_V','GPX3D','GPY3D','GPZ3D','GVX3D','GVY3D','GVZ3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS']
-			data = [varib,HaloID,Halo_P,Halo_V,GPX3D,GPY3D,GPZ3D,GVX3D,GVY3D,GVZ3D,M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,x_range,ENS_CAUMASS,ENS_CAUMASS_EST,ENS_CAUSURF,ENS_NFWSURF,LOS_CAUMASS,LOS_CAUMASS_EST,LOS_CAUSURF,LOS_NFWSURF,ENS_R,ENS_V,ENS_GMAGS,ENS_RMAGS,ENS_IMAGS,LOS_R,LOS_V,LOS_GMAGS,LOS_RMAGS,LOS_IMAGS,ENS_HVD,LOS_HVD,SAMS,PRO_POS]
+			names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID']
+			data = [varib,HaloID,Halo_P,Halo_V,ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D,M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,x_range,ENS_CAUMASS,ENS_CAUMASS_EST,ENS_CAUSURF,ENS_NFWSURF,LOS_CAUMASS,LOS_CAUMASS_EST,LOS_CAUSURF,LOS_NFWSURF,ENS_R,ENS_V,ENS_GMAGS,ENS_RMAGS,ENS_IMAGS,LOS_R,LOS_V,LOS_GMAGS,LOS_RMAGS,LOS_IMAGS,ENS_HVD,LOS_HVD,SAMS,PRO_POS,ENS_GAL_ID,LOS_GAL_ID,ENS_CLUS_ID]
+
 			mydict = dict( zip(names,data) )
 
 			# Append Bin Arrays if bin stack
@@ -213,8 +223,10 @@ class Recover(universal):
 			if go_global == True:
 				globals().update(mydict)
 				globals().update(varib)
+				globals().update(run_dict)
 				return
 			elif go_global == False:
+				mydict.update(run_dict)
 				return  mydict	
 
 		################################
@@ -235,8 +247,10 @@ class Recover(universal):
 
 
 		# Return to Namespaces depending on go_global
-		names = ['varib','HaloID','Halo_P','Halo_V','GPX3D','GPY3D','GPZ3D','GVX3D','GVY3D','GVZ3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ens_mbias','ens_mscat','los_mbias','los_mscat','ens_vbias','ens_vscat','los_vbias','los_vscat','ENS_MFRAC','ENS_VFRAC','LOS_MFRAC','LOS_VFRAC']
-		data = [varib,HaloID,Halo_P,Halo_V,GPX3D,GPY3D,GPZ3D,GVX3D,GVY3D,GVZ3D,M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,x_range,ENS_CAUMASS,ENS_CAUMASS_EST,ENS_CAUSURF,ENS_NFWSURF,LOS_CAUMASS,LOS_CAUMASS_EST,LOS_CAUSURF,LOS_NFWSURF,ENS_R,ENS_V,ENS_GMAGS,ENS_RMAGS,ENS_IMAGS,LOS_R,LOS_V,LOS_GMAGS,LOS_RMAGS,LOS_IMAGS,ENS_HVD,LOS_HVD,SAMS,PRO_POS,ens_mbias,ens_mscat,los_mbias,los_mscat,ens_vbias,ens_vscat,los_vbias,los_vscat,ENS_MFRAC,ENS_VFRAC,LOS_MFRAC,LOS_VFRAC]
+
+		names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ens_mbias','ens_mscat','los_mbias','los_mscat','ens_vbias','ens_vscat','los_vbias','los_vscat','ENS_MFRAC','ENS_VFRAC','LOS_MFRAC','LOS_VFRAC']
+		data = [varib,HaloID,Halo_P,Halo_V,ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D,M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,x_range,ENS_CAUMASS,ENS_CAUMASS_EST,ENS_CAUSURF,ENS_NFWSURF,LOS_CAUMASS,LOS_CAUMASS_EST,LOS_CAUSURF,LOS_NFWSURF,ENS_R,ENS_V,ENS_GMAGS,ENS_RMAGS,ENS_IMAGS,LOS_R,LOS_V,LOS_GMAGS,LOS_RMAGS,LOS_IMAGS,ENS_HVD,LOS_HVD,SAMS,PRO_POS,ENS_GAL_ID,LOS_GAL_ID,ENS_CLUS_ID,ens_mbias,ens_mscat,los_mbias,los_mscat,ens_vbias,ens_vscat,los_vbias,los_vscat,ENS_MFRAC,ENS_VFRAC,LOS_MFRAC,LOS_VFRAC]
+
 		mydict = dict( zip(names,data) )
 
 		# Append Bin Arrays if bin stack
@@ -246,9 +260,12 @@ class Recover(universal):
 		if go_global == True:
 			globals().update(mydict)
 			globals().update(varib)
+			globals().update(run_dict)
 			return
 		elif go_global == False:
+			mydict.update(run_dict)
 			return  mydict	
+
 
 
 	def stat_calc(self,MASS_EST,MASS_TRUE,HVD_EST,HVD_TRUE,data_set='full',ens=True):
@@ -340,7 +357,7 @@ class Work(Recover):
 		self.LOS_VSCAT.append(d.los_vscat)	
 
 
-	def load_all(self,iter_array=None,tab_shape=None,ens_only=True):
+	def load_all(self,iter_array=None,tab_shape=None,ens_only=True,kwargs=None):
 		'''
 		This iterates over different richness geometry configurations and runs statistics on data.
 		It is recommended to do any calculations (statistics, plots etc.) within the for loop, and
@@ -348,6 +365,8 @@ class Work(Recover):
 		'''
 		# Feed Local Variables
 		self.ens_only = ens_only	
+		if kwargs == None:
+			kwargs = {'write_loc':'mm_m0_run1','raw_data':False,'ss':False,'go_global':False,'ens_only':True,'data_loc':'mass_mix/mm_0.05_run_table1'}
 	
 		# Configure Variables
 		if iter_array == None:
@@ -370,7 +389,10 @@ class Work(Recover):
 				print 'Working on Run #'+str(i)
 				print '-'*25
 				## Define Recover Keyword Arguments!  ##
-				kwargs = {'write_loc':'bs_m0_run'+str(i),'raw_data':False,'ss':False,'go_global':False,'ens_only':True,'data_loc':'binstack_run_table2'}
+				kwargs['write_loc'] = 'mm_m0_run'+str(i)
+				kwargs['ens_only'] = True
+				if i%7==0:
+					kwargs['ens_only'] = False	
 				print 'Recover Keyword Arguments:'
 				print '-'*40
 				print kwargs
@@ -435,7 +457,12 @@ W = Work(Recover)
 
 work = False
 if work == True:
-	data = W.load_all()
+	
+	table_num = str(sys.argv[1])
+
+	kwargs = {'write_loc':'mm_m0_run1','raw_data':False,'ss':False,'mm':True,'go_global':False,'ens_only':True,'data_loc':'mass_mix/mm_0.50_run_table1'}
+
+	data = W.load_all(kwargs=kwargs)
 
 	names = ('ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_MSCAT','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM')
 
@@ -443,11 +470,11 @@ if work == True:
 
 	dictionary = dict(zip(names,values))
 
-	file = open('binstack_run_table2_analysis.pkl','wb')
+	file = open('mass_mix/mm_0.50_run_table'+table_num+'/mm_0.50_run_table'+table_num+'_analysis.pkl','wb')
 
-	output = pkl.Pickler(dictionary)
+	output = pkl.Pickler(file)
 
-	output.dump(data)
+	output.dump(dictionary)
 
 
 

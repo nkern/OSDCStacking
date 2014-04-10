@@ -16,6 +16,8 @@ self_stack:
 import numpy as np
 import numpy.random as npr
 import astStats
+import matplotlib.pyplot as mp
+from mpl_toolkits.mplot3d import Axes3D
 
 ## Program ##
 
@@ -96,7 +98,7 @@ class Stack:
 		return self.MC.M200,self.MC.M200_est,self.CS.Ar_finalD,self.CS.vesc_fit	
 
 
-	def build_ensemble(self,r,v,gmags,rmags,imags,halodata,l):
+	def build_ensemble(self,r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,halodata,l):
 		''' 
 		- This function selects specific galaxies per line of sight using a sepcified method of stacking
 		- The current method of interloper treatment is using CausticMass.py's ShiftGapper technique
@@ -114,22 +116,22 @@ class Stack:
 	
 		# Sort galaxies by r Magnitude
 		bright = np.argsort(rmags)
-		r,v,gmags,rmags,imags = r[bright],v[bright],gmags[bright],rmags[bright],imags[bright]
+		r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags = r[bright],v[bright],en_gal_id[bright],en_clus_id[bright],ln_gal_id[bright],gmags[bright],rmags[bright],imags[bright]
 
 		if self.method_num == 0:
-			en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags = self.build_method_0(r,v,gmags,rmags,imags,r_crit200)
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = self.build_method_0(r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,r_crit200)
 
 		elif self.method_num == 1:
-			en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags,samp_size = self.build_method_1(r,v,gmags,rmags,imags,r_crit200)
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags,samp_size = self.build_method_1(r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,r_crit200)
 		
 #		elif self.method_num == 2:
 #			en_r,en_v,en_m,ln_r,ln_v,ln_m = self.build_method_2(r,v,mags,r_crit200)
 
-		return en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags
+		return en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags
 
 
 
-	def build_method_0(self,r,v,gmags,rmags,imags,r_crit200):
+	def build_method_0(self,r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,r_crit200):
 		'''Picking top brightest galaxies, such that there are gal_num galaxies within r200'''
 
 		gal_num = self.gal_num
@@ -150,14 +152,14 @@ class Stack:
 		if self.clean_ens == True:
 			excess *= 2.0				# make excess a bit larger than previously defined
 			end = within[:gal_num + excess + 1][-1]
-			r2,v2,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[:end],v[:end],gmags[:end],rmags[:end],imags[:end]]).T).T # Shiftgapper inputs and outputs data as transpose...
+			r2,v2,en_gal_id,en_clus_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[:end],v[:end],en_gal_id[:end],en_clus_id[:end],gmags[:end],rmags[:end],imags[:end]]).T).T # Shiftgapper inputs and outputs data as transpose...
 			within = np.where(r2<r_crit200)[0]	# re-calculate within array with new sample
 			excess = gal_num / 5.0
 			end = within[:gal_num + excess + 1][-1]
 			# Append to ensemble array
-			en_r,en_v,en_gmags,en_rmags,en_imags = r2[:end],v2[:end],gmags2[:end],rmags2[:end],imags2[:end]
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags = r2[:end],v2[:end],en_gal_id[:end],en_clus_id[:end],gmags2[:end],rmags2[:end],imags2[:end]
 		else:
-			en_r,en_v,en_gmags,en_rmags,en_imags = r[0:end],v[0:end],gmags[0:end],rmags[0:end],imags[0:end]
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags = r[0:end],v[0:end],en_gal_id[:end],en_clus_id[:end],gmags[0:end],rmags[0:end],imags[0:end]
 
 
 		## ----------------------------------------- ##
@@ -173,28 +175,34 @@ class Stack:
 			excess = gal_num / 5.0
 		end = within[:gal_num + excess + 1][-1]		# instead of indexing I am slicing b/c
 		# shiftgapper on line of sight
-		r2,v2,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[:end],v[:end],gmags[:end],rmags[:end],imags[:end]]).T).T
+		r2,v2,ln_gal_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[:end],v[:end],ln_gal_id[:end],gmags[:end],rmags[:end],imags[:end]]).T).T
 		within = np.where(r2<r_crit200)[0]		# re-calculate within array with new sample
 		# Sort by rmags
 		sort = np.argsort(rmags2)
-		r2,v2,gmags2,rmags2,imags2 = r2[sort],v2[sort],gmags2[sort],rmags2[sort],imags2[sort]
+		r2,v2,ln_gal_id,gmags2,rmags2,imags2 = r2[sort],v2[sort],ln_gal_id[sort],gmags2[sort],rmags2[sort],imags2[sort]
 		# Now feed ln arrays correct gal_num richness within r200
 		end = within[:gal_num + 1][-1]
-		ln_r,ln_v,ln_gmags,ln_rmags,ln_imags = r2[:end],v2[:end],gmags2[:end],rmags2[:end],imags2[:end]	
+		ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = r2[:end],v2[:end],ln_gal_id[:end],gmags2[:end],rmags2[:end],imags2[:end]	
 
 		# Done! Now we have en_r and ln_r arrays, which will either be stacked (former) or put straight into Caustic technique (latter)
-		return en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags
+		return en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags
 
 
-	def build_method_1(self,r,v,gmags,rmags,imags,r_crit200):
+	def build_method_1(self,r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,r_crit200):
 		'''Randomly choosing bright galaxies until gal_num galaxies are within r200'''
+
 		gal_num = self.gal_num
 		
 		# reduce size of sample to something reasonable within magnitude limits
 		sample = gal_num * 25				# arbitrary coefficient, see sites page post Apr 24th, 2013 for more info
-		r,v,gmags,rmags,imags = r[:sample],v[:sample],gmags[:sample],rmags[:sample],imags[:sample]
+		r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags = r[:sample],v[:sample],en_gal_id[:sample],en_clus_id[:sample],ln_gal_id[:sample],gmags[:sample],rmags[:sample],imags[:sample]
 		samp_size = len(r)				# actual size of sample (might be less than gal_num*25)
 		self.samp_size = samp_size
+
+		# create gal_id arrays
+	#	en_gal_id = np.copy(gal_id)
+	#	ln_gal_id = np.copy(gal_id)
+
 
 		# create random numbered array for galaxy selection
 		if gal_num < 10:				# when gal_num < 10, has trouble hitting gal_num richness inside r200
@@ -215,16 +223,16 @@ class Stack:
 		### Build Ensemble
 		if self.clean_ens == True:
 
-			r2,v2,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando],v[rando],gmags[rando],rmags[rand],imags[rando]]).T).T
+			r2,v2,en_gal_id,en_clus_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando],v[rando],en_gal_id[rando],en_clus_id[rando],gmags[rando],rmags[rand],imags[rando]]).T).T
 			within = np.where(r2<r_crit200)[0]
 			excess = gal_num / 5.0
 			end = within[:gal_num + excess + 1][-1]
 			# Append to ensemble array
-			en_r,en_v,en_gmags,en_rmags,en_imags = r2[:end],v2[:end],gmags2[:end],rmags2[:end],imags2[:end]
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags = r2[:end],v2[:end],en_gal_id[:end],en_clus_id[:end],gmags2[:end],rmags2[:end],imags2[:end]
 		else:
 			excess = gal_num / 5.0
 			end = within[:gal_num + excess + 1][-1]
-			en_r,en_v,en_gmags,en_rmags,en_imags = r[rando][:end],v[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags = r[rando][:end],v[rando][:end],en_gal_id[rando][:end],en_clus_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]
 
 		### Build LOS
 		if gal_num < 10:
@@ -234,10 +242,10 @@ class Stack:
 		try:
 			end = within[:gal_num + excess + 1][-1]
 			# shiftgapper
-			r2,v2,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
+			r2,v2,ln_gal_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],ln_gal_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
 			# sort by rmags
 			sort = np.argsort(rmags2)
-			r2,v2,gmags2,rmags2,imags2 = r2[sort],v2[sort],gmags2[sort],rmags2[sort],imags2[sort]
+			r2,v2,ln_gal_id,gmags2,rmags2,imags2 = r2[sort],v2[sort],ln_gal_id[sort],gmags2[sort],rmags2[sort],imags2[sort]
 			# feed back gal_num gals within r200
 			within = np.where(r2<r_crit200)[0]
 			end = within[:gal_num + 1][-1]
@@ -261,7 +269,7 @@ class Stack:
 					samp_num += 2
 			try:
 				end = within[:gal_num + excess + 1][-1]
-				r2,v2,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
+				r2,v2,ln_gal_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],ln_gal_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
 				within = np.where(r2<r_crit200)[0]
 				end = within[:gal_num + 1][-1]
 				richness = len(within)
@@ -271,10 +279,12 @@ class Stack:
 			if j >= 100:
 				break
 
-		ln_r,ln_v,ln_gmags,ln_rmags,ln_imags = r2[:end],v2[:end],gmags2[:end],rmags2[:end],imags2[:end]
+		ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = r2[:end],v2[:end],ln_gal_id[:end],gmags2[:end],rmags2[:end],imags2[:end]
 		# Done! Now we have en_r and ln_r arrays (ensemble and line of sight arrays)
 		
-		return en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags,samp_size
+		return en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags,samp_size
+
+
 
 
 	def build_method_2(self,r,v,mags,r_crit200):
@@ -297,9 +307,6 @@ class Stack:
 		r,v,mags,gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = rt[:end],vt[:end],magst[:end],gpx3dt[:end],gpy3dt[:end],gpz3dt[:end],gvx3dt[:end],gvy3dt[:end],gvz3dt[:end] 
 		###########################
 		return en_r,en_v,en_m,ln_r,ln_v,ln_m
-
-
-
 
 
 class SelfStack:
@@ -464,6 +471,9 @@ class BinStack:
 		los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd = [],[],[],[],[],[]
 		los_caumass, los_caumass_est, los_causurf, los_nfwsurf = [], [], [], []
 		sample_size,pro_pos = [],[]
+		ens_gal_id,los_gal_id = [],[]
+		ens_clus_id = []
+		gal_id_count = 0
 
 		## Loop over lines of sight (different clusters)
 		for [l,s] in zip(np.arange(self.line_num*j,self.line_num*(j+1)),self.stack_range[j*self.line_num:(j+1)*self.line_num]):
@@ -477,11 +487,17 @@ class BinStack:
 				# Line of Sight Calculation for naturally 3D data
 				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
 
+			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
+			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
+			gal_id_count += len(r)
+			ln_gal_id = np.arange(len(r))
+			en_clus_id = np.array([HaloID[s]]*len(r),int)
+
 			# Limit Data in Phase Space
-			r,v,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,G_Mags[l],R_Mags[l],I_Mags[l],R_crit200[s],HVD[s])
+			r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,en_gal_id,en_clus_id,ln_gal_id,G_Mags[l],R_Mags[l],I_Mags[l],R_crit200[s],HVD[s])
 
 			# Build LOS and Ensemble, with given method of stacking
-			en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r,v,gmags,rmags,imags,HaloData.T[s],l)	
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,HaloData.T[s],l)	
 
 			# If Scale data before stack is desired
 			if self.scale_data == True:
@@ -493,7 +509,9 @@ class BinStack:
 			ens_gmags.extend(en_gmags)
 			ens_rmags.extend(en_rmags)
 			ens_imags.extend(en_imags)
-			
+			ens_gal_id.extend(np.array(en_gal_id,int))
+			ens_clus_id.extend(np.array(en_clus_id,int))
+	
 			# Calculate LOS HVD (this is after shiftgapper) if run_los == True
 			if self.run_los == True:
 				# Pick out gals within r200
@@ -526,6 +544,7 @@ class BinStack:
 			# Append LOS Data Arrays
 			los_r.append(ln_r)
 			los_v.append(ln_v)
+			los_gal_id.append(np.array(ln_gal_id,int))
 			los_gmags.append(ln_gmags)
 			los_rmags.append(ln_rmags)
 			los_imags.append(ln_imags)
@@ -542,17 +561,19 @@ class BinStack:
 			ens_r = np.array(ens_r)*BIN_R200[k]
 
 		# Shiftgapper for Ensemble Interloper treatment
-		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags = self.C.shiftgapper(np.vstack([ens_r,ens_v,ens_gmags,ens_rmags,ens_imags]).T).T
+		ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags = self.C.shiftgapper(np.vstack([ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags]).T).T
 
 		# Sort by R_Mag
 		sort = np.argsort(ens_rmags)
-		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags = ens_r[sort],ens_v[sort],ens_gmags[sort],ens_rmags[sort],ens_imags[sort]
+		ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags = ens_r[sort],ens_v[sort],ens_gal_id[sort],ens_clus_id[sort],ens_gmags[sort],ens_rmags[sort],ens_imags[sort]
 
 		# Reduce system to gal_num richness within r200
 		within = np.where(ens_r <= BIN_R200[k])[0]
 		end = within[:self.gal_num*self.line_num + 1][-1]
 		ens_r = ens_r[:end]
 		ens_v = ens_v[:end]
+		ens_gal_id = ens_gal_id[:end]
+		ens_clus_id = ens_clus_id[:end]
 		ens_gmags = ens_gmags[:end]
 		ens_rmags = ens_rmags[:end]
 		ens_imags = ens_imags[:end]
@@ -576,8 +597,11 @@ class BinStack:
 		los_hvd,los_caumass,los_caumass_est = np.array(los_hvd),np.array(los_caumass),np.array(los_caumass_est)
 		los_causurf,los_nfwsurf = np.array(los_causurf),np.array(los_nfwsurf)
 		sample_size,pro_pos = np.array(sample_size),np.array(pro_pos)
+		ens_gal_id = np.array(ens_gal_id,int)
+		los_gal_id = np.array(los_gal_id)
+		ens_clus_id = np.array(ens_clus_id,int)
 
-		return ens_r,ens_v,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos	
+		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos	
 
 
 
