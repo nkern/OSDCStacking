@@ -291,6 +291,9 @@ class universal:
 		# Apply Mass Scatter
 		M_crit200 *= mass_mix
 
+		# Create M200_match array
+		M_crit200_match = np.copy(M_crit200)
+	
 		# Sort by Descending Mass
 		sort = np.argsort(M_crit200)[::-1]
 		M_crit200 = M_crit200[sort]
@@ -310,7 +313,7 @@ class universal:
 		# Re-pack
 		HaloData = np.array([M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
 
-		return HaloID,HaloData
+		return HaloID,HaloData,M_crit200_match,sort
 		
  
 	def id_match(self,ID1,ID2,data):

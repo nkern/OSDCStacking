@@ -455,12 +455,12 @@ class Work(Recover):
 R = Recover()
 W = Work(Recover)
 
-work = False
+work = True
 if work == True:
 	
 	table_num = str(sys.argv[1])
 
-	kwargs = {'write_loc':'mm_m0_run1','raw_data':False,'ss':False,'mm':True,'go_global':False,'ens_only':True,'data_loc':'mass_mix/mm_0.50_run_table1'}
+	kwargs = {'write_loc':'bs_m0_run1','raw_data':False,'ss':False,'mm':True,'go_global':False,'ens_only':True,'data_loc':'binstack/bs_run_table1'}
 
 	data = W.load_all(kwargs=kwargs)
 
@@ -470,7 +470,7 @@ if work == True:
 
 	dictionary = dict(zip(names,values))
 
-	file = open('mass_mix/mm_0.50_run_table'+table_num+'/mm_0.50_run_table'+table_num+'_analysis.pkl','wb')
+	file = open('binstack/bs_run_table'+table_num+'/bs_run_table'+table_num+'_analysis.pkl','wb')
 
 	output = pkl.Pickler(file)
 

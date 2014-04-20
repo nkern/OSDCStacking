@@ -36,7 +36,7 @@ light_cone	= False				# Input RA|DEC projection data if True, if False inputting
 clean_ens	= False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set	= False				# 100 Halo Set or 2000 Halo Set
 run_los		= False				# Run caustic technique on each line of sight?
-mass_mix	= False				# Incorporate Mass Mixing Models?
+mass_mix	= True				# Incorporate Mass Mixing Models?
 center_mix	= None				# 'r','v', or None. Inducing Scatter on center radius, center velocity, or None.
 
 ## CONSTANTS ##
@@ -51,7 +51,7 @@ v_limit		= 3500.0			# Velocity Cut in km/s
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
 halo_num	= 2100				# Total number of halos loaded
 run_time	= time.asctime()		# Time when program was started
-mass_scat	= 0				# If mass_mix = True, fractional scatter induced into table mass
+mass_scat	= '0.05'				# If mass_mix = True, fractional scatter induced into table mass
 
 ## RUN DEPENDENT CONSTANTS ##
 run_num		= int(sys.argv[1])		# run_num th iteration of the whole job array in PBS script
@@ -73,7 +73,7 @@ else:
 	write_loc = 'bs_m'+str(method_num)+'_run'+str(cell_num)			# Bin Stack data-write location
 	stack_range = np.arange(run_num*clus_num*line_num,run_num*clus_num*line_num+clus_num*line_num)
 	if mass_mix == True:							# Change write_loc if mass mixing
-		data_loc = 'mass_mix/mm_'+str(mass_scat)+'_run_table'+str(table_num)
+		data_loc = 'mass_mix/mm_'+mass_scat+'_run_table'+str(table_num)
 		write_loc = 'mm_m'+str(method_num)+'_run'+str(cell_num)
 
 ## Make dictionary for above constants
@@ -100,10 +100,20 @@ HaloID,HaloData = U.sort_halos(HaloID,HaloData)
 HaloID_init,HaloData_init = np.copy(HaloID),np.copy(HaloData)
 # Mass Mix if applicable
 if mass_mix == True:
-	HaloID,HaloData = U.mass_mixing(HaloID,HaloData,mass_scat)
-	mass_mix_match,HaloID_match,HaloData_match = U.id_match(HaloID_init,HaloID,np.array(HaloData))
+	pre_run = False
+	if pre_run == True:	# Need to create 1 mass mix array that each flux job loads in as halo array
+		HaloID,HaloData,M_crit200_match,mass_mix_match = U.mass_mixing(HaloID,HaloData,float(mass_scat))
+		f = open(data_loc+'/mm_halo_array.pkl','wb')
+		output = pkl.Pickler(f)
+		data = {'mass_mix_match':mass_mix_match,'HaloID':HaloID,'HaloData':HaloData,'M_crit200_match':M_crit200_match,'HaloID_init':HaloID_init,'HaloData_init':HaloData_init}		
+		output.dump(data)
+		f.close()
+	elif pre_run == False:
+		f = open(data_loc+'/mm_halo_array.pkl','rb')
+		input = pkl.Unpickler(f)
+		globals().update(input.load())
 else:
-	mass_mix_match,HaloID_match,HaloData_match = [],[],[]
+	mass_mix_match,M_crit200_match = [],[]
 
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
@@ -120,6 +130,7 @@ if self_stack == True:
 else:
 	for [i,l] in zip(np.arange(clus_num*line_num),stack_range):
 		Gal_P2.append((Gal_P[i].T-Halo_P[l]).T)
+
 
 # If Bin Stacking:
 #	- Create Ensemble R200 and HVD arrays
@@ -155,7 +166,7 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 		# Get 3D data
 		#gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = U.mag_get_3d(Gal_P2[j],Gal_V[j],G_Mags[j],R_Mags[j],I_Mags[j],ens_gmags,ens_rmags,ens_imags)	
 		gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)	
-	else:	# I don't yet know how to do this efficiently for bin stacking
+	else:
 		 ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)
 
 	# Combine into stack_data
@@ -169,8 +180,8 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 U.print_separation('#...Finished Ensemble Loop',type=2)
 
 # Create run_dict
-keys = ['HaloID','HaloData','HaloID_init','HaloData_init','mass_mix_match','HaloID_match','HaloData_match']
-vals = [HaloID,HaloData,HaloID_init,HaloData_init,mass_mix_match,HaloID_match,HaloData_match]
+keys = ['HaloID','HaloData','HaloID_init','HaloData_init','mass_mix_match','M_crit200_match']
+vals = [HaloID,HaloData,HaloID_init,HaloData_init,mass_mix_match,M_crit200_match]
 run_dict = dict(zip(keys,vals))
 
 ### Save Data into Fits Files ###

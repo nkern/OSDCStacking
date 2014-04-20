@@ -336,6 +336,10 @@ class SelfStack:
 		los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd = [],[],[],[],[],[]
 		los_caumass, los_caumass_est, los_causurf, los_nfwsurf = [], [], [], []
 		sample_size,pro_pos = [],[]
+		sample_size,pro_pos = [],[]
+		ens_gal_id,los_gal_id = [],[]
+		ens_clus_id = []
+		gal_id_count = 0
 
 		## Loop over lines of sight
 		for l in range(self.line_num):
@@ -346,11 +350,17 @@ class SelfStack:
 				# Line of Sight Calculation for naturally 3D data
 				r, v, projected_pos = self.U.line_of_sight(Gal_P[j],Gal_V[j],Halo_P[k],Halo_V[k],k)
 
+			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
+			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
+			gal_id_count += len(r)
+			ln_gal_id = np.arange(len(r))
+			en_clus_id = np.array([HaloID[s]]*len(r),int)
+
 			# Limit Data in Phase Space
-			r,v,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,G_Mags[j],R_Mags[j],I_Mags[j],R_crit200[k],HVD[k])
+			r,v,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,en_gal_id,en_clus_id,ln_gal_id,G_Mags[l],R_Mags[l],I_Mags[l],R_crit200[s],HVD[s])
 
 			# Build LOS and Ensemble, with given method of stacking
-			en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r,v,gmags,rmags,imags,HaloData.T[k],l)	
+			en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,HaloData.T[s],l)	
 
 			# Build Ensemble Arrays
 			ens_r.extend(en_r)
@@ -435,9 +445,11 @@ class SelfStack:
 		los_hvd,los_caumass,los_caumass_est = np.array(los_hvd),np.array(los_caumass),np.array(los_caumass_est)
 		los_causurf,los_nfwsurf = np.array(los_causurf),np.array(los_nfwsurf)
 		sample_size,pro_pos = np.array(sample_size),np.array(pro_pos)
+		ens_gal_id = np.array(ens_gal_id,int)
+		los_gal_id = np.array(los_gal_id)
+		ens_clus_id = np.array(ens_clus_id,int)
 
-		return ens_r,ens_v,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos	
-
+		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos
 
 
 

@@ -887,7 +887,7 @@ class MassCalc:
             #self.r200_est = (ri[:self.f_beta.size])[np.where(self.avg_density >= 200*self.crit)[0]+1][-1]
             finterp = interp1d(self.avg_density[::-1],ri[:self.f_beta.size][::-1])
             self.r200_est = finterp(200*self.crit)
-        except IndexError:
+        except: # IndexError:
             self.r200_est = 0.0
 #        self.M200_est = self.massprofile[np.where(ri[:self.f_beta.size] <= self.r200_est)[0][-1]]
         finterp = interp1d(ri[:self.f_beta.size],self.massprofile)
