@@ -616,8 +616,180 @@ class BinStack:
 		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos	
 
 
+	def bin_stack_bootstrap(self,HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j):
+		'''
+		This function takes a copy of bin_stack_clusters() and applies a bootstrap to derive uncertanties in mass estimate
+		'''
+		## Unpack HaloData array 
+		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD = HaloData
+		BIN_M200,BIN_R200,BIN_HVD = BinData
 
+		## Define Arrays for Building Ensemble and LOS
+		# Ensemble Arrays:	[Successive Ensemble Number][Data]
+		# Line of Sight Arrays:	[Line Of Sight][Data]
+		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags,ens_hvd = [],[],[],[],[],[]
+		ens_caumass, ens_caumass_est, ens_causurf, ens_nfwsurf = [], [], [], []
+		los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd = [],[],[],[],[],[]
+		los_caumass, los_caumass_est, los_causurf, los_nfwsurf = [], [], [], []
+		sample_size,pro_pos = [],[]
+		ens_gal_id,los_gal_id = [],[]
+		ens_clus_id = []
+		gal_id_count = 0
+
+		## Determine which clusters to stack in bootstrap ##
+		# Random line_num clusters from set of line_num clusters, with repetition allowed
+		self.bootstrap_select = npr.randint(self.stack_range[j*self.line_num:(j+1)*self.line_num][0],self.stack_range[j*self.line_num:(j+1)*self.line_num][-1]+1,self.line_num*2)
+		print 'bootstrap_select:'
+		print self.bootstrap_select
+
+		## Loop over lines of sight (different clusters)
+		for [l,s] in zip(np.arange(self.line_num*j,self.line_num*(j+1)),self.stack_range[j*self.line_num:(j+1)*self.line_num]):
+
+			## Define bootstrap weighting of this cluster in final cluster ##
+			# Possible values can be from 0 - line_num
+			multiplicity = np.where(self.bootstrap_select==s)[0]
+			weight = len(multiplicity)
+
+			# Define index for to-be-stacked halo as cluster index (k) + line of sight index (l)
+
+			if self.light_cone == True:
+				# Configure RA, DEC and Z into cluster-centric radius and velocity
+				pass
+			else:
+				# Line of Sight Calculation for naturally 3D data
+				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
+
+		
+			# Enter Multiplicity Loop
+			for m in range(weight):
+
+				# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
+				en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
+				gal_id_count += len(r)
+				ln_gal_id = np.arange(len(r))
+				en_clus_id = np.array([HaloID[s]]*len(r),int)
+
+				# Limit Data in Phase Space
+				r_limited,v_limited,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,en_gal_id,en_clus_id,ln_gal_id,G_Mags[l],R_Mags[l],I_Mags[l],R_crit200[s],HVD[s])
+
+				# Build LOS and Ensemble, with given method of stacking
+				en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r_limited,v_limited,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,HaloData.T[s],l)	
 			
+
+				# If Scale data before stack is desired
+				if self.scale_data == True:
+					en_r = self.U.scale_gals(en_r,R_crit200[s])				
+		
+				# Build Ensemble Arrays
+				ens_r.extend(en_r)
+				ens_v.extend(en_v)
+				ens_gmags.extend(en_gmags)
+				ens_rmags.extend(en_rmags)
+				ens_imags.extend(en_imags)
+				ens_gal_id.extend(np.array(en_gal_id,int))
+				ens_clus_id.extend(np.array(en_clus_id,int))
+	
+			# Calculate LOS HVD (this is after shiftgapper) if run_los == True
+			# No LOS for bootstrapping
+			#if self.run_los == True:
+				# Pick out gals within r200
+			#	ln_within = np.where(ln_r<R_crit200[s])[0]
+			#	gal_count = len(ln_within)
+			#	if gal_count <= 3:
+			#		'''biweightScale can't take less than 4 elements'''
+					# Calculate hvd with numpy std of galaxies within r200 (b/c this is quoted richness)
+			#		ln_hvd = np.std(np.copy(ln_v)[ln_within])
+			#	else:
+					# Calculate hvd with astStats biweightScale (see Beers 1990)
+			#		try:
+			#			ln_hvd = astStats.biweightScale(np.copy(ln_v)[ln_within],9.0)
+					# Sometimes divide by zero error in biweight function for low gal_num
+			#		except ZeroDivisionError:
+			#			print 'ZeroDivisionError in biweightfunction, line 140 in caustic_class_stack2D'
+			#			print 'ln_v[ln_within]=',ln_v[ln_within]
+			#			ln_hvd = np.std(np.copy(ln_v)[ln_within])
+			#else:
+			ln_hvd = []
+
+			# Run Caustic Technique for LOS mass estimation if run_los == True
+			# No LOS for Bootstrap
+			#if self.run_los == True:
+			#	ln_caumass,ln_caumass_est,ln_causurf,ln_nfwsurf = self.S.kernel_caustic_masscalc(ln_r,ln_v,HaloData.T[s],BinData.T[k],ln_hvd,k,l)
+			#	print 'j = '+str(j)+', k = '+str(k)+', l = '+str(l)+', s = '+str(s)
+			#else:
+			ln_caumass,ln_caumass_est,ln_causurf,ln_nfwsurf = [],[],[],[]
+		
+			# Append LOS Data Arrays
+			los_r.append(ln_r)
+			los_v.append(ln_v)
+			los_gal_id.append(np.array(ln_gal_id,int))
+			los_gmags.append(ln_gmags)
+			los_rmags.append(ln_rmags)
+			los_imags.append(ln_imags)
+			los_hvd.append(ln_hvd)
+			los_caumass.append(ln_caumass)
+			los_caumass_est.append(ln_caumass_est)
+			los_causurf.append(ln_causurf)
+			los_nfwsurf.append(ln_nfwsurf)
+			sample_size.append(samp_size)
+			pro_pos.append(projected_pos)
+
+		# If scale data == True, re-scale by ensemble r200
+		if self.scale_data == True:
+			ens_r = np.array(ens_r)*BIN_R200[k]
+
+		# Shiftgapper for Ensemble Interloper treatment
+		ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags = self.C.shiftgapper(np.vstack([ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags]).T).T
+
+		# Sort by R_Mag
+		sort = np.argsort(ens_rmags)
+		ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags = ens_r[sort],ens_v[sort],ens_gal_id[sort],ens_clus_id[sort],ens_gmags[sort],ens_rmags[sort],ens_imags[sort]
+
+		# Reduce system to gal_num richness within r200
+		within = np.where(ens_r <= BIN_R200[k])[0]
+		end = within[:self.gal_num*self.line_num + 1][-1]
+		ens_r = ens_r[:end]
+		ens_v = ens_v[:end]
+		ens_gal_id = ens_gal_id[:end]
+		ens_clus_id = ens_clus_id[:end]
+		ens_gmags = ens_gmags[:end]
+		ens_rmags = ens_rmags[:end]
+		ens_imags = ens_imags[:end]
+
+		# Calculate HVD
+		en_hvd = astStats.biweightScale(np.copy(ens_v)[np.where(ens_r<=BIN_R200[k])],9.0)
+
+		# Run Caustic Technique!
+		en_caumass,en_caumass_est,en_causurf,en_nfwsurf = self.S.kernel_caustic_masscalc(ens_r,ens_v,HaloData.T[k],BinData.T[k],en_hvd,k)
+
+		# Append Ensemble Data Arrays
+		ens_hvd.append(en_hvd)
+		ens_caumass.append(en_caumass)
+		ens_caumass_est.append(en_caumass_est)
+
+		# Turn into numpy arrays
+		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags = np.array(ens_r),np.array(ens_v),np.array(ens_gmags),np.array(ens_rmags),np.array(ens_imags)
+		ens_hvd,ens_caumass,ens_caumass_est = np.array(ens_hvd),np.array(ens_caumass),np.array(ens_caumass_est)
+		ens_causurf,ens_nfwsurf = np.array(en_causurf),np.array(en_nfwsurf)
+		los_r,los_v,los_gmags,los_rmags,los_imags = np.array(los_r),np.array(los_v),np.array(los_gmags),np.array(los_rmags),np.array(los_imags)
+		los_hvd,los_caumass,los_caumass_est = np.array(los_hvd),np.array(los_caumass),np.array(los_caumass_est)
+		los_causurf,los_nfwsurf = np.array(los_causurf),np.array(los_nfwsurf)
+		sample_size,pro_pos = np.array(sample_size),np.array(pro_pos)
+		ens_gal_id = np.array(ens_gal_id,int)
+		los_gal_id = np.array(los_gal_id)
+		ens_clus_id = np.array(ens_clus_id,int)
+
+		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos
+
+
+
+
+
+
+
+
+
+
 
 
 

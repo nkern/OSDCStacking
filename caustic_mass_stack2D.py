@@ -38,6 +38,7 @@ small_set	= False				# 100 Halo Set or 2000 Halo Set
 run_los		= False				# Run caustic technique on each line of sight?
 mass_mix	= True				# Incorporate Mass Mixing Models?
 center_mix	= None				# 'r','v', or None. Inducing Scatter on center radius, center velocity, or None.
+bootstrap	= True				# Perform a bootstrapping technique to estimate error in mass estimation?
 
 ## CONSTANTS ##
 c 		= 2.99792e5			# speed of light in km/s
@@ -51,7 +52,6 @@ v_limit		= 3500.0			# Velocity Cut in km/s
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
 halo_num	= 2100				# Total number of halos loaded
 run_time	= time.asctime()		# Time when program was started
-mass_scat	= '0.05'				# If mass_mix = True, fractional scatter induced into table mass
 
 ## RUN DEPENDENT CONSTANTS ##
 run_num		= int(sys.argv[1])		# run_num th iteration of the whole job array in PBS script
@@ -63,6 +63,7 @@ cell_num	= sys.argv[6]			# Cell Number ID corresponding to given gal_num & line_
 table_num	= int(sys.argv[7])		# Table Re-Run Version	
 run_los 	= bool(int(sys.argv[8]))	# If fed 8th arg value as True, run_los
 root 		= '/glusterfs/users/caustics1'	# Root for OSDC
+mass_scat	= '0.05'			# If mass_mix = True, fractional scatter induced into table mass
 
 if self_stack == True:								# Change Write Directory Depending on Parameters
 	data_loc = 'selfstack/ss_run_table'+str(table_num)			# Parent Directory where write_loc directories live
@@ -77,7 +78,14 @@ else:
 		write_loc = 'mm_m'+str(method_num)+'_run'+str(cell_num)
 
 ## Make dictionary for above constants
-varib = {'c':c,'h':h,'H0':H0,'q':q,'beta':beta,'fbeta':fbeta,'r_limit':r_limit,'v_limit':v_limit,'data_set':data_set,'halo_num':halo_num,'gal_num':gal_num,'line_num':line_num,'method_num':method_num,'write_loc':write_loc,'data_loc':data_loc,'root':root,'self_stack':self_stack,'scale_data':scale_data,'use_flux':use_flux,'write_data':write_data,'light_cone':light_cone,'run_time':run_time,'clean_ens':clean_ens,'small_set':small_set,'run_los':run_los,'run_num':run_num,'clus_num':clus_num,'cell_num':cell_num,'stack_range':stack_range,'mass_mix':mass_mix,'mass_scat':mass_scat}
+varib = {'c':c,'h':h,'H0':H0,'q':q,'beta':beta,'fbeta':fbeta,'r_limit':r_limit,'v_limit':v_limit,'data_set':data_set,'halo_num':halo_num,'gal_num':gal_num,'line_num':line_num,'method_num':method_num,'write_loc':write_loc,'data_loc':data_loc,'root':root,'self_stack':self_stack,'scale_data':scale_data,'use_flux':use_flux,'write_data':write_data,'light_cone':light_cone,'run_time':run_time,'clean_ens':clean_ens,'small_set':small_set,'run_los':run_los,'bootstrap':bootstrap,'run_num':run_num,'clus_num':clus_num,'cell_num':cell_num,'stack_range':stack_range,'mass_mix':mass_mix,'mass_scat':mass_scat}
+
+if bootstrap == True:
+	# Import bootstrap_rep from bootstrap_params.py file
+	from bootstrap_params import *
+	varib['bootstrap_num'] = bootstrap_num
+	varib['bootstrap_rep'] = bootstrap_rep
+	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/run'+str(bootstrap_rep)
 
 ## INITIALIZATION ##
 U = universal(varib)
@@ -108,7 +116,7 @@ if mass_mix == True:
 		data = {'mass_mix_match':mass_mix_match,'HaloID':HaloID,'HaloData':HaloData,'M_crit200_match':M_crit200_match,'HaloID_init':HaloID_init,'HaloData_init':HaloData_init}		
 		output.dump(data)
 		f.close()
-	elif pre_run == False:
+	else:
 		f = open(data_loc+'/mm_halo_array.pkl','rb')
 		input = pkl.Unpickler(f)
 		globals().update(input.load())
@@ -137,7 +145,7 @@ else:
 #	- Change order of halos to bin upon
 #	- Create any other arrays needed
 if self_stack == False:
-	BinData = U.Bin_Calc(HaloData,varib)
+	BinData = U.Bin_Calc(HaloData,varib,avg_meth='mean')
 	BIN_M200,BIN_R200,BIN_HVD = BinData
 
 # Initialize Multi-Ensemble Array to hold resultant data
@@ -155,19 +163,29 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 
 	# Build Ensemble and Run Caustic Technique
 	if self_stack:
-		stack_data = SS.self_stack_clusters(HaloID,HaloData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
+		if bootstrap == True:
+			stack_data = SS.self_stack_bootstrap(HaloID,HaloData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
+		else:
+			stack_data = SS.self_stack_clusters(HaloID,HaloData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
 	else:
-		stack_data = BS.bin_stack_clusters(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
+		if bootstrap == True:
+			stack_data = BS.bin_stack_bootstrap(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
+		else:
+			stack_data = BS.bin_stack_clusters(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
 
 	# Unpack data
 	ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos = stack_data
+
 
 	if self_stack == True:
 		# Get 3D data
 		#gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = U.mag_get_3d(Gal_P2[j],Gal_V[j],G_Mags[j],R_Mags[j],I_Mags[j],ens_gmags,ens_rmags,ens_imags)	
 		gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)	
 	else:
-		 ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)
+		if bootstrap == True:
+			ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = [],[],[],[] # Don't yet know how to do this for bootstrap
+		else:
+			ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)
 
 	# Combine into stack_data
 	stack_data = [ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D]
@@ -184,18 +202,30 @@ keys = ['HaloID','HaloData','HaloID_init','HaloData_init','mass_mix_match','M_cr
 vals = [HaloID,HaloData,HaloID_init,HaloData_init,mass_mix_match,M_crit200_match]
 run_dict = dict(zip(keys,vals))
 
-### Save Data into Fits Files ###
+### Save Data into .pkl Files ###
 if write_data == True:
-	U.print_separation('#...Starting Data Write',type=2)
-	for m in range(clus_num):
-		n = run_num*clus_num + m
-		U.print_separation("Writing Data for Ensemble #"+str(n),type=2)
-		pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(n)+'_Data.pkl','wb')
-		output = pkl.Pickler(pkl_file)
-		output.dump(STACK_DATA[m])
-		output.dump(varib)
-		output.dump(run_dict)
-		pkl_file.close()
+	U.print_separation('##...Starting Data Write',type=2)
+	raise NameError
+	if bootstrap == True:
+		for m in range(clus_num):
+			n = run_num*clus_num + m
+			U.print_separation("Writing Data for Ensemble #"+str(n),type=2)
+			pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(n)+'_Data.pkl','wb')
+			output = pkl.Pickler(pkl_file)
+			output.dump(STACK_DATA[m])
+			output.dump(varib)
+			output.dump(run_dict)
+			pkl_file.close()
+	else:
+		for m in range(clus_num):
+			n = run_num*clus_num + m
+			U.print_separation("Writing Data for Ensemble #"+str(n),type=2)
+			pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(n)+'_Data.pkl','wb')
+			output = pkl.Pickler(pkl_file)
+			output.dump(STACK_DATA[m])
+			output.dump(varib)
+			output.dump(run_dict)
+			pkl_file.close()
 	
 	U.print_separation('#...Finished Data Write',type=2)
 

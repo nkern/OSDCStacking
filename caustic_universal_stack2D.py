@@ -253,21 +253,27 @@ class universal:
 		return r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,samp_size
 
 
-	def Bin_Calc(self,HaloData,varib):
+	def Bin_Calc(self,HaloData,varib,avg_meth='mean'):
 		'''
 		This function does pre-technique binning analysis
 		'''
 		# Unpack Arrays
 		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD = HaloData
 
-		# Sort Arrays based on specific Binning Method
+		# Choose Averaging Method
+		if avg_meth == 'median':
+			avg_method = np.median
+		elif avg_meth == 'mean':
+			avg_method = np.mean
+		else:
+			avg_method = np.mean
 
 		# Calculate Bin R200 and Bin HVD, use median
 		BIN_M200,BIN_R200,BIN_HVD = [],[],[]
 		for i in range(varib['halo_num']/varib['line_num']):
-			BIN_M200.append( np.median( M_crit200[i*varib['line_num']:(i+1)*varib['line_num']] ) )
-			BIN_R200.append( np.median( R_crit200[i*varib['line_num']:(i+1)*varib['line_num']] ) )
-			BIN_HVD.append( np.median( HVD[i*varib['line_num']:(i+1)*varib['line_num']] ) )
+			BIN_M200.append( avg_method( M_crit200[i*varib['line_num']:(i+1)*varib['line_num']] ) )
+			BIN_R200.append( avg_method( R_crit200[i*varib['line_num']:(i+1)*varib['line_num']] ) )
+			BIN_HVD.append( avg_method( HVD[i*varib['line_num']:(i+1)*varib['line_num']] ) )
 	
 		BIN_M200,BIN_R200,BIN_HVD = np.array(BIN_M200),np.array(BIN_R200),np.array(BIN_HVD)
 
@@ -316,19 +322,21 @@ class universal:
 		return HaloID,HaloData,M_crit200_match,sort
 		
  
-	def id_match(self,ID1,ID2,data):
+	def id_match(self,ID1,ID2,data=None):
 		'''
-		This function takes two IDs (one-dim arrays) and matches them up by identical value, the conversion being matching ID2 to ID1, then applying the match to data.
-		This means that ID2 and data match in primary key
+		This function takes two IDs (one-dim arrays) and matches them up by identical value
+		Meaning it matches ID2 to ID1, then applies match to "data" matrix
 		'''
-		sort = np.zeros(len(ID2),int)
+		sort = np.zeros(len(ID1),int)
 		for i in np.arange(len(sort)):
-			sort[i] = np.where(ID2[i] == ID1)[0][0]
+			sort[i] = np.where(ID2 == ID1[i])[0][0]
 		
 		ID2 = ID2[sort]
-		data = data.T[sort].T
+		if data != None:
+			data = data.T[sort].T
+			return sort,ID2,data
 
-		return sort,ID2,data			
+		return sort,ID2		
 
 
 	def mag_get_3d(self,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,gmags,rmags,imags):
@@ -409,6 +417,7 @@ class universal:
 		print "self_stack		=",varib['self_stack']
 		print "write_data		=",varib['write_data']
 		print "run_los			=",varib['run_los']
+		print "bootstrap		=",varib['bootstrap']
 		print "mass_mix		=",varib['mass_mix']
 		print "mass_scat		=",varib['mass_scat']
 		return	
