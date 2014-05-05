@@ -186,7 +186,6 @@ class universal:
 
 
 
-
 	def line_of_sight(self,gal_p,gal_v,halo_p,halo_v,k):
 		'''Line of Sight Calculations to mock projected data, if given 3D data'''
 		# Pick Position
@@ -417,9 +416,11 @@ class universal:
 		print "self_stack		=",varib['self_stack']
 		print "write_data		=",varib['write_data']
 		print "run_los			=",varib['run_los']
-		print "bootstrap		=",varib['bootstrap']
 		print "mass_mix		=",varib['mass_mix']
-		print "mass_scat		=",varib['mass_scat']
+		if varib['mass_mix'] == True:
+			print "mass_scat		=",varib['mass_scat']
+		print "bootstrap		=",varib['bootstrap']
+
 		return	
 
 	def print_separation(self,text,type=1):

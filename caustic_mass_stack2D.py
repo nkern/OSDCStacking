@@ -16,7 +16,7 @@ import astropy.io.fits as fits
 from numpy.linalg import norm
 import matplotlib.pyplot as mp
 import astStats
-import sys
+import sys,os
 import time
 import cPickle as pkl
 from mpl_toolkits.mplot3d import Axes3D
@@ -25,6 +25,11 @@ from scipy import stats
 from caustic_class_stack2D import *
 from caustic_universal_stack2D import *
 from CausticMass import Caustic,CausticSurface,MassCalc
+
+sys.path.insert(0,os.getcwd())
+__import__('caustic_params')
+from caustic_params import *
+print "Loaded caustic_params from",sys.modules['caustic_params']
 
 
 ## FLAGS ##
@@ -36,9 +41,9 @@ light_cone	= False				# Input RA|DEC projection data if True, if False inputting
 clean_ens	= False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set	= False				# 100 Halo Set or 2000 Halo Set
 run_los		= False				# Run caustic technique on each line of sight?
-mass_mix	= True				# Incorporate Mass Mixing Models?
-center_mix	= None				# 'r','v', or None. Inducing Scatter on center radius, center velocity, or None.
-bootstrap	= True				# Perform a bootstrapping technique to estimate error in mass estimation?
+mass_mix	= False				# Incorporate Mass Mixing Models?
+center_scat	= None				# 'r','v', or None. Inducing Scatter on halo r center, halo v center, or None.
+bootstrap	= False				# Perform a bootstrapping technique to estimate error in mass estimation?
 
 ## CONSTANTS ##
 c 		= 2.99792e5			# speed of light in km/s
@@ -52,19 +57,21 @@ v_limit		= 3500.0			# Velocity Cut in km/s
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
 halo_num	= 2100				# Total number of halos loaded
 run_time	= time.asctime()		# Time when program was started
+root 		= '/glusterfs/users/caustics1'	# Root for OSDC
 
 ## RUN DEPENDENT CONSTANTS ##
-run_num		= int(sys.argv[1])		# run_num th iteration of the whole job array in PBS script
-clus_num	= int(sys.argv[2])		# Number of Ensembles to build and solve for in this run
-gal_num		= int(sys.argv[3])		# Number of galaxies taken per line of sight
-line_num	= int(sys.argv[4])		# Number of lines of sight to stack over
-method_num	= int(sys.argv[5])		# Ensemble Build Method Number
-cell_num	= sys.argv[6]			# Cell Number ID corresponding to given gal_num & line_num geometry in a Run Table
-table_num	= int(sys.argv[7])		# Table Re-Run Version	
-run_los 	= bool(int(sys.argv[8]))	# If fed 8th arg value as True, run_los
-root 		= '/glusterfs/users/caustics1'	# Root for OSDC
-mass_scat	= '0.05'			# If mass_mix = True, fractional scatter induced into table mass
-
+try:							# Variables feed via arguments to file execution
+	run_num		= int(sys.argv[1])		# run_num th iteration of the whole job array in PBS script
+	clus_num	= int(sys.argv[2])		# Number of Ensembles to build and solve for in this run
+	gal_num		= int(sys.argv[3])		# Number of galaxies taken per line of sight
+	line_num	= int(sys.argv[4])		# Number of lines of sight to stack over
+	method_num	= int(sys.argv[5])		# Ensemble Build Method Number
+	cell_num	= sys.argv[6]			# Cell Number ID corresponding to given gal_num & line_num geometry in a Run Table
+	table_num	= int(sys.argv[7])		# Table Re-Run Version	
+	run_los 	= bool(int(sys.argv[8]))	# If fed 8th arg value as True, run_los
+except IndexError:					# Variables loaded via caustic_params
+	pass
+	
 if self_stack == True:								# Change Write Directory Depending on Parameters
 	data_loc = 'selfstack/ss_run_table'+str(table_num)			# Parent Directory where write_loc directories live
 	write_loc = 'ss_m'+str(method_num)+'_run'+str(cell_num)			# Self Stack data-write location
@@ -77,15 +84,13 @@ else:
 		data_loc = 'mass_mix/mm_'+mass_scat+'_run_table'+str(table_num)
 		write_loc = 'mm_m'+str(method_num)+'_run'+str(cell_num)
 
-## Make dictionary for above constants
-varib = {'c':c,'h':h,'H0':H0,'q':q,'beta':beta,'fbeta':fbeta,'r_limit':r_limit,'v_limit':v_limit,'data_set':data_set,'halo_num':halo_num,'gal_num':gal_num,'line_num':line_num,'method_num':method_num,'write_loc':write_loc,'data_loc':data_loc,'root':root,'self_stack':self_stack,'scale_data':scale_data,'use_flux':use_flux,'write_data':write_data,'light_cone':light_cone,'run_time':run_time,'clean_ens':clean_ens,'small_set':small_set,'run_los':run_los,'bootstrap':bootstrap,'run_num':run_num,'clus_num':clus_num,'cell_num':cell_num,'stack_range':stack_range,'mass_mix':mass_mix,'mass_scat':mass_scat}
-
 if bootstrap == True:
-	# Import bootstrap_rep from bootstrap_params.py file
-	from bootstrap_params import *
-	varib['bootstrap_num'] = bootstrap_num
-	varib['bootstrap_rep'] = bootstrap_rep
-	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/run'+str(bootstrap_rep)
+	write_loc = 'bo_m'+str(method_num)+'_run'+str(cell_num)
+	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
+
+## Make dictionary for above constants
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','use_flux','write_data','light_cone','run_time','clean_ens','small_set','run_los','bootstrap','run_num','clus_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep']
+varib = ez.create(keys,locals())
 
 ## INITIALIZATION ##
 U = universal(varib)
@@ -120,8 +125,6 @@ if mass_mix == True:
 		f = open(data_loc+'/mm_halo_array.pkl','rb')
 		input = pkl.Unpickler(f)
 		globals().update(input.load())
-else:
-	mass_mix_match,M_crit200_match = [],[]
 
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
@@ -145,7 +148,7 @@ else:
 #	- Change order of halos to bin upon
 #	- Create any other arrays needed
 if self_stack == False:
-	BinData = U.Bin_Calc(HaloData,varib,avg_meth='mean')
+	BinData = U.Bin_Calc(HaloData,varib,avg_meth='median')
 	BIN_M200,BIN_R200,BIN_HVD = BinData
 
 # Initialize Multi-Ensemble Array to hold resultant data
@@ -188,7 +191,8 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 			ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)
 
 	# Combine into stack_data
-	stack_data = [ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D]
+	keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','los_r','los_v','los_gal_id','los_gmags','los_rmags','los_imags','los_hvd','los_caumass','los_caumass_est','los_causurf','los_nfwsurf','x_range','sample_size','pro_pos','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','BS.bootstrap_select']
+	stack_data = ez.create(keys,locals())
 
 	# Append to STACK_DATA
 	STACK_DATA.append(stack_data)
@@ -199,34 +203,22 @@ U.print_separation('#...Finished Ensemble Loop',type=2)
 
 # Create run_dict
 keys = ['HaloID','HaloData','HaloID_init','HaloData_init','mass_mix_match','M_crit200_match']
-vals = [HaloID,HaloData,HaloID_init,HaloData_init,mass_mix_match,M_crit200_match]
-run_dict = dict(zip(keys,vals))
+run_dict = ez.create(keys,locals())
 
 ### Save Data into .pkl Files ###
 if write_data == True:
 	U.print_separation('##...Starting Data Write',type=2)
-	raise NameError
-	if bootstrap == True:
-		for m in range(clus_num):
-			n = run_num*clus_num + m
-			U.print_separation("Writing Data for Ensemble #"+str(n),type=2)
-			pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(n)+'_Data.pkl','wb')
-			output = pkl.Pickler(pkl_file)
-			output.dump(STACK_DATA[m])
-			output.dump(varib)
-			output.dump(run_dict)
-			pkl_file.close()
-	else:
-		for m in range(clus_num):
-			n = run_num*clus_num + m
-			U.print_separation("Writing Data for Ensemble #"+str(n),type=2)
-			pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(n)+'_Data.pkl','wb')
-			output = pkl.Pickler(pkl_file)
-			output.dump(STACK_DATA[m])
-			output.dump(varib)
-			output.dump(run_dict)
-			pkl_file.close()
-	
+	for m in range(clus_num):
+		n = run_num*clus_num + m
+		U.print_separation("Writing Data for Ensemble #"+str(n),type=2)
+		print 'Writing File: '+root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(n)+'_Data.pkl'
+		pkl_file = open(root+'/nkern/OSDCStacking/'+data_loc+'/'+write_loc+'/Ensemble_'+str(n)+'_Data.pkl','wb')
+		output = pkl.Pickler(pkl_file)
+		output.dump(STACK_DATA[m])
+		output.dump(varib)
+		output.dump(run_dict)
+		pkl_file.close()
+
 	U.print_separation('#...Finished Data Write',type=2)
 
 

@@ -18,6 +18,8 @@ import numpy.random as npr
 import astStats
 import matplotlib.pyplot as mp
 from mpl_toolkits.mplot3d import Axes3D
+import DictEZ as ez
+
 
 ## Program ##
 
@@ -354,7 +356,7 @@ class SelfStack:
 			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
 			gal_id_count += len(r)
 			ln_gal_id = np.arange(len(r))
-			en_clus_id = np.array([HaloID[s]]*len(r),int)
+			en_clus_id = np.array([HaloID[k]]*len(r),int)
 
 			# Limit Data in Phase Space
 			r,v,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,en_gal_id,en_clus_id,ln_gal_id,G_Mags[l],R_Mags[l],I_Mags[l],R_crit200[s],HVD[s])
@@ -659,7 +661,12 @@ class BinStack:
 				# Line of Sight Calculation for naturally 3D data
 				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
 
-		
+			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
+			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
+			gal_id_count += len(r)
+			ln_gal_id = np.arange(len(r))
+			en_clus_id = np.array([HaloID[s]]*len(r),int)
+	
 			# Enter Multiplicity Loop
 			for m in range(weight):
 
@@ -675,7 +682,6 @@ class BinStack:
 				# Build LOS and Ensemble, with given method of stacking
 				en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r_limited,v_limited,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,HaloData.T[s],l)	
 			
-
 				# If Scale data before stack is desired
 				if self.scale_data == True:
 					en_r = self.U.scale_gals(en_r,R_crit200[s])				
@@ -720,6 +726,9 @@ class BinStack:
 			ln_caumass,ln_caumass_est,ln_causurf,ln_nfwsurf = [],[],[],[]
 		
 			# Append LOS Data Arrays
+			if weight == 0:
+				ln_r,ln_v,ln_gmags,ln_rmags,ln_imags,samp_size = [],[],[],[],[],0
+
 			los_r.append(ln_r)
 			los_v.append(ln_v)
 			los_gal_id.append(np.array(ln_gal_id,int))
