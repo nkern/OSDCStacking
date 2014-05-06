@@ -6,7 +6,6 @@ file location : /glusterfs/users/caustics1/nkern/OSDCStacking
 
 ## Run Dependent Constants ##
 
-run_num		= 0				# run_num th iteration of the whole job array in PBS script
 clus_num	= 3				# Number of Ensembles to build and solve for in this run
 gal_num		= 25				# Number of galaxies taken per line of sight
 line_num	= 5				# Number of lines of sight to stack over

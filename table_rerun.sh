@@ -6,16 +6,22 @@
 ######################
 
 ## Initialize Configuration Arrays and Other Constants
-cell_num=($(seq 1 49))				# Number of Cells
-line_num=(2 5 10 15 25 50 100)			# Line of Sight Number 
-gal_num=(5 10 15 25 50 100 150)			# Ngal number
-clus_num=(75 30 15 10 6 3 1)			# Number of Ens Clusters done per instance
-job_num=(14 14 14 14 14 14 21)			# Number of Jobs Submitted
-halo_num=2100					# Number of Halos in Sample
-method_num=0					# Ensemble Build Method
-table_num=5					# Version of entire run table
-data_loc="mass_mix/mm_0.05_run_table"$table_num	# Highest Directory for Data
-write_stem="mm_m0_run"				# Stem of write_loc directory
+cell_num=($(seq 1 49))						# Number of Cells
+line_num=(2 5 10 15 25 50 100)					# Line of Sight Number 
+gal_num=(5 10 15 25 50 100 150)					# Ngal number
+clus_num=(75 30 15 10 6 3 1)					# Number of Ens Clusters done per instance
+job_num=(14 14 14 14 14 14 21)					# Number of Jobs Submitted
+halo_num=2100							# Number of Halos in Sample
+method_num=1							# Ensemble Build Method
+table_num=1							# Version of entire run table
+mass_scat=None							# If mass mixing, induced fractional scatter
+data_loc="selfstack/ss_run_table"$table_num			# Highest Directory for Data
+write_stem="ss_m1_run"						# Stem of write_loc directory
+data_loc="selfstack/ss_run_table$table_num"			# Highest Directory for Data
+base_dir="/glusterfs/users/caustics1/nkern/OSDCStacking"	# Base Directory
+
+## Go To Stacking Directory
+cd $base_dir 
 
 ## Check Directory ##
 echo "Loaded Directory is: $data_loc"
@@ -65,7 +71,7 @@ if [ $accept != 'y' ];
 fi 
 
 
-## Begin FLUX Job Submission
+## Begin PBS Job Submission
 echo "Beginning FLUX job submission..."
 echo "-------------------------------------------"
 echo ""
@@ -88,7 +94,7 @@ do
 done
 
 ## Go to Stacking Directory
-cd /glusterfs/users/caustics1/nkern/OSDCStacking
+cd $base_dir
 
 m=0
 for k in ${DIRS[*]}
@@ -98,7 +104,7 @@ do
 
 	echo '----------------------------------------------------------'
 	echo -e "cell_num=${cell_num[$k]}\tgal_num=${gal_num[$k]}\tline_num=${line_num[$k]}"
-	# Submit Job Array To FLUX by feeding "mr_flux_stack_pbs.sh" job parameters
+	# Submit Job Array To PBS by feeding "table_rerun_pbs.sh" job parameters
 	# $1 : clus_num			(first caustic_mass_stack2D.py positional parameter)
 	# $2 : gal_num			(second positional parameter)
 	# $3 : line_num			(third positional parameter)
@@ -111,7 +117,7 @@ do
 	# Define Constants
 	let "clus_num=$halo_num/(${job_array[$k]}+1)/${line_num[$k]}"
 
-	# Submit FLUX JOB for Ensembles
+	# Define constants to be replaced in pbs script
 	_run_num="$run_num"
 	_clus_num="$clus_num"
 	_gal_num="${gal_num[$k]}"
@@ -121,19 +127,11 @@ do
 	_data_loc="$data_loc"
 	_write_loc="$write_stem${cell_num[$k]}"
 
-	sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@run_num@@:$_run_num:g;s:@@clus_num@@:$_clus_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$_method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@run_los@@:0:g" < table_flux_stack_pbs_rerun.sh > $_data_loc/$_write_loc/script_rerun.sh
+	# Create script_rerun.sh file
+	sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $_data_loc/$_write_loc/script_rerun.sh
 
-	# Change run_los = True if line_num == 100
-	let "a=${cell_num[$k]}%7"
-	if [ $a == 0 ]
-		then
-
-		sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@run_num@@:$_run_num:g;s:@@clus_num@@:$_clus_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$_method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@run_los@@:1:g" < table_flux_stack_pbs_rerun.sh > $_data_loc/$_write_loc/script_rerun.sh
-
-	fi
-
-	# Submit Script to FLUX via qsub
-	qsub $_data_loc/$_write_loc/script_rerun.sh 
+	# Submit Script to PBS via qsub
+	#qsub $_data_loc/$_write_loc/script_rerun.sh 
 	echo ""
 
 	m=$((m+1))

@@ -60,8 +60,8 @@ run_time	= time.asctime()		# Time when program was started
 root 		= '/glusterfs/users/caustics1'	# Root for OSDC
 
 ## RUN DEPENDENT CONSTANTS ##
+run_num			= int(sys.argv[1])		# run_num th iteration of the whole job array in PBS script
 try:							# Variables feed via arguments to file execution
-	run_num		= int(sys.argv[1])		# run_num th iteration of the whole job array in PBS script
 	clus_num	= int(sys.argv[2])		# Number of Ensembles to build and solve for in this run
 	gal_num		= int(sys.argv[3])		# Number of galaxies taken per line of sight
 	line_num	= int(sys.argv[4])		# Number of lines of sight to stack over

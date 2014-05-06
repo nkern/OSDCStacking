@@ -7,8 +7,8 @@
 #PBS -j oe
 #
 
-cd /glusterfs/users/caustics1/nkern/OSDCStacking
+cd /glusterfs/users/caustics1/nkern/OSDCStacking/@@data_loc@@/@@write_loc@@
 
-python caustic_mass_stack2D.py @@run_num@@ @@clus_num@@ @@gal_num@@ @@line_num@@ @@method_num@@ @@cell_num@@ @@table_num@@ @@run_los@@
+python caustic_mass_stack2D.py @@run_num@@ 
 
 
