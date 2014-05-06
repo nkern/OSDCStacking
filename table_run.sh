@@ -1,5 +1,5 @@
 #!/bin/bash
-# This program iteratively submits qsub flux_stack_pbs.sh to FLUX.
+# This program iteratively submits qsub table_flux_stack_pbs.sh to FLUX.
 
 echo -n "Are you sure you want to run the script table_run.sh? (y/n):"
 read accept
@@ -13,17 +13,18 @@ fi
 ##################
 
 ## Initialize Configuration Arrays and Other Constants
-cell_num=($(seq 1 49))				# Number of Cells
-line_num=(2 5 10 15 25 50 100)			# Line of Sight Number 
-gal_num=(5 10 15 25 50 100 150)			# Ngal number
-halo_num=2100					# Number of Halos in Sample
-method_num=0					# Ensemble Build Method
-table_num=1					# Version of entire run table
-write_stem="mm_m0_run"				# Stem of write_loc directory
-data_loc="mass_mix/mm_0.05_run_table$table_num"	# Highest Directory for Data
+cell_num=($(seq 1 49))						# Number of Cells
+line_num=(2 5 10 15 25 50 100)					# Line of Sight Number 
+gal_num=(5 10 15 25 50 100 150)					# Ngal number
+halo_num=2100							# Number of Halos in Sample
+method_num=1							# Ensemble Build Method
+table_num=1							# Version of entire run table
+write_stem="ss_m1_run"						# Stem of write_loc directory
+data_loc="selfstack/ss_run_table$table_num"			# Highest Directory for Data
+base_dir="/glusterfs/users/caustics1/nkern/OSDCStacking"	# Base Directory
 
 ## Go To Stacking Directory
-cd /glusterfs/users/caustics1/nkern/OSDCStacking
+cd $base_dir 
 
 ## Double Check if Directories Exist
 # Parent Directory Check
@@ -48,6 +49,8 @@ if [ -d $data_loc ]
 fi
 
 # Sub Directory Check (including LOS)
+echo ""
+echo "...Checking subdirectories"
 for i in ${cell_num[*]}
 do
 	dir=$write_stem$i
@@ -68,7 +71,7 @@ do
 		let "k=($i*7)+$j"
 		echo '----------------------------------------------------------'
 		echo -e "cell_num=${cell_num[$k]}\tgal_num=${gal_num[$i]}\tline_num=${line_num[$j]}"
-		# Submit Job Array To FLUX by feeding "mr_flux_stack_pbs.sh" job parameters
+		# Submit Job Array To PBS by feeding "table_run_pbs.sh" job parameters
 		# $1 : clus_num			(first caustic_mass_stack2D.py positional parameter)
 		# $2 : gal_num			(second positional parameter)
 		# $3 : line_num			(third positional parameter)
@@ -83,7 +86,7 @@ do
 		let "clus_num=$halo_num/(${job_array[$j]}+1)/${line_num[$j]}"
 		write_loc=$write_stem${cell_num[$k]}
 
-		# Submit FLUX JOB for Ensembles
+		# Define constants to be replaced in pbs script 
 		_clus_num="$clus_num"
 		_gal_num="${gal_num[$i]}"
 		_line_num="${line_num[$j]}"
@@ -93,17 +96,21 @@ do
 		_data_loc="$data_loc"
 		_write_loc="$write_loc"
 
-		sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@job_array@@:$_job_array:g;s:@@clus_num@@:$_clus_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$_method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@run_los@@:0:g" < table_flux_stack_pbs.sh > $_data_loc/$_write_loc/script.sh
+		# Create caustic_params.py file in working directory
+		sed -e "s:@@clus_num@@:$_clus_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$_method_num:g;s:@@cell_num@@:$_method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@run_los@@:0:g" <table_run_pbs.sh > $_data_loc/$_write_loc/caustic_params.py
 
-		# Change run_los = True if line_num == 100
+		# Create script.sh file
+		sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@job_array@@:$_job_array:g" < table_run_pbs.sh > $_data_loc/$_write_loc/script.sh
+
+		# Change run_los = True if line_num == 100 in caustic_params.py
 		let "a=${cell_num[$k]}%7"
 		if [ $a == 0 ]
 			then
-			sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@job_array@@:$_job_array:g;s:@@clus_num@@:$_clus_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$_method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@run_los@@:1:g" < table_flux_stack_pbs.sh > $_data_loc/$_write_loc/script.sh
+			sed -e "s:@@clus_num@@:$_clus_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$_method_num:g;s:@@cell_num@@:$_method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@run_los@@:1:g" <table_run_pbs.sh > $_data_loc/$_write_loc/caustic_params.py
 		fi
 
 		# Submit Script to FLUX via qsub
-		qsub $_data_loc/$_write_loc/script.sh 
+		#qsub $_data_loc/$_write_loc/script.sh 
 		echo ""
 
 		echo '----------------------------------------------------------'

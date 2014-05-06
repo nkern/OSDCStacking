@@ -74,6 +74,8 @@ IND_MBIAS 		= np.array([-.64,-.39,-.16,-.10,-.03,.00,.01,.01])
 IND_MBIAS_ERR 		= np.array([.09,.08,.05,.05,.04,.03,.03,.03])
 ##
 
+
+raise NameError
 # Load Data
 globals().update(M.load(filename='mass_mix/mm_0.05_run_table1/mm_0.05_run_table1_analysis.pkl'))
 
@@ -175,25 +177,27 @@ axes.locator_params(axis='both',nbins=12)
 
 
 ### ENS_MBIAS Density Map
-mp.matshow(ENS_MBIAS,cmap='jet',vmin=-.15,vmax=.15,alpha=.9)
+mp.matshow(ENS_MBIAS.T[1:].T[1:],cmap='jet',vmin=-.15,vmax=.15,alpha=.9)
 cbar = mp.colorbar()
 cbar.set_label('Mass Bias',fontsize=12)
 mp.grid()
-mp.xticks([0,1,2,3,4,5,6],[2,5,10,15,25,50,100])
-mp.yticks([0,1,2,3,4,5,6],[5,10,15,25,50,100,150])
+mp.xticks([0,1,2,3,4,5],[5,10,15,25,50,100])
+mp.yticks([0,1,2,3,4,5],[10,15,25,50,100,150])
 mp.xlabel('Clusters per Bin (LOS)',fontsize=15)
 mp.ylabel('Galaxies per Cluster (Ngal)',fontsize=15)
+mp.tick_params(axis='x',labeltop='off',labelbottom='on')
 mp.title("Ensemble Mass Bias")
 
 ### ENS_MSCAT Density Map
-mp.matshow(ENS_MSCAT,cmap='Paired')#,vmin=0.0,vmax=.40)
+mp.matshow(ENS_MSCAT.T[1:].T[1:],cmap='Paired')#,vmin=0.0,vmax=.40)
 cbar = mp.colorbar()
 cbar.set_label('Mass Scatter',fontsize=12)
 mp.grid()
-mp.xticks([0,1,2,3,4,5,6],[2,5,10,15,25,50,100])
-mp.yticks([0,1,2,3,4,5,6],[5,10,15,25,50,100,150])
+mp.xticks([0,1,2,3,4,5],[5,10,15,25,50,100])
+mp.yticks([0,1,2,3,4,5],[10,15,25,50,100,150])
 mp.xlabel('Clusters per Bin (LOS)',fontsize=15)
 mp.ylabel('Galaxies per Cluster (Ngal)',fontsize=15)
+mp.tick_params(axis='x',labeltop='off',labelbottom='on')
 mp.title("Ensemble Mass Scatter")
 
 ### ENS_VBIAS Density Map
@@ -220,7 +224,7 @@ mp.title("Ensemble Vel. Disp Scatter")
 
 ### RICH_NUM Contour Map
 levels=np.array([10,25,50,100,200,500,1000,2000,5000],int)
-CS = mp.contour(np.arange(7),np.arange(7),np.array(RICH_NUM,int),levels,colors='Black')
+CS = mp.contour(np.arange(6),np.arange(6),np.array(RICH_NUM.T[1:].T[1:],int),levels,colors='Black')
 fmt = dict(zip(CS.levels,np.array(np.array(CS.levels,int),str)))
 mp.clabel(CS,CS.levels,inline=1,fontsize=13,fmt=fmt)
 

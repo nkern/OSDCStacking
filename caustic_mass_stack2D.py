@@ -34,7 +34,7 @@ print "Loaded caustic_params from",sys.modules['caustic_params']
 
 ## FLAGS ##
 use_flux	= True				# Using flux or sophie
-self_stack	= False				# Run self-stack or bin-stack
+self_stack	= True				# Run self-stack or bin-stack
 scale_data	= True				# Scale data by r200 if True
 write_data 	= True				# Write Data to Result directories if True
 light_cone	= False				# Input RA|DEC projection data if True, if False inputting x,y,z 3D data
@@ -89,7 +89,7 @@ if bootstrap == True:
 	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
 
 ## Make dictionary for above constants
-keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','use_flux','write_data','light_cone','run_time','clean_ens','small_set','run_los','bootstrap','run_num','clus_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep']
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','use_flux','write_data','light_cone','run_time','clean_ens','small_set','run_los','bootstrap','run_num','clus_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth']
 varib = ez.create(keys,locals())
 
 ## INITIALIZATION ##
@@ -148,7 +148,8 @@ else:
 #	- Change order of halos to bin upon
 #	- Create any other arrays needed
 if self_stack == False:
-	BinData = U.Bin_Calc(HaloData,varib,avg_meth='median')
+	U.print_separation("Average Method for Construction of Bin Properties is "+avg_meth,type=2)
+	BinData = U.Bin_Calc(HaloData,varib,avg_meth=avg_meth)
 	BIN_M200,BIN_R200,BIN_HVD = BinData
 
 # Initialize Multi-Ensemble Array to hold resultant data
@@ -180,13 +181,15 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 	ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos = stack_data
 
 
+	# Get 3D data
 	if self_stack == True:
-		# Get 3D data
-		#gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = U.mag_get_3d(Gal_P2[j],Gal_V[j],G_Mags[j],R_Mags[j],I_Mags[j],ens_gmags,ens_rmags,ens_imags)	
-		gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)	
+		if bootstrap == True:
+			pass # Don't yet know how to do this for bootstrap
+		else:	
+			ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)	
 	else:
 		if bootstrap == True:
-			ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = [],[],[],[] # Don't yet know how to do this for bootstrap
+			pass # Don't yet know how to do this for bootstrap
 		else:
 			ENS_GP3D,ENS_GV3D,LOS_GP3D,LOS_GV3D = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j)
 

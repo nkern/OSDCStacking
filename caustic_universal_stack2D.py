@@ -373,7 +373,17 @@ class universal:
 		'''
 
 		if self_stack == True:
-			pass
+			# Create fully concatenated arrays to draw ensemble data from
+			GPX3D,GPY3D,GPZ3D = Gal_P[j][0],Gal_P[j][1],Gal_P[j][0]
+			GVX3D,GVY3D,GVZ3D = Gal_V[j][0],Gal_V[j][1],Gal_V[j][0]
+		
+			# Recover ensemble 3D data
+			ens_gpx3d,ens_gpy3d,ens_gpz3d = GPX3D[ens_gal_id],GPY3D[ens_gal_id],GPZ3D[ens_gal_id]
+			ens_gvx3d,ens_gvy3d,ens_gvz3d = GVX3D[ens_gal_id],GVY3D[ens_gal_id],GVZ3D[ens_gal_id]
+
+			# Recover line_of_sight 3D data	
+			los_gpx3d,los_gpy3d,los_gpz3d = np.array(map(lambda x: GPX3D[x],los_gal_id)),np.array(map(lambda x: GPY3D[x],los_gal_id)),np.array(map(lambda x: GPZ3D[x],los_gal_id))
+			los_gvx3d,los_gvy3d,los_gvz3d = np.array(map(lambda x: GVX3D[x],los_gal_id)),np.array(map(lambda x: GVY3D[x],los_gal_id)),np.array(map(lambda x: GVZ3D[x],los_gal_id))
 
 		else:	
 			# Create fully concatenated arrays to draw ensemble data from

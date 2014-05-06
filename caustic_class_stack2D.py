@@ -18,6 +18,7 @@ import numpy.random as npr
 import astStats
 import matplotlib.pyplot as mp
 from mpl_toolkits.mplot3d import Axes3D
+import time
 import DictEZ as ez
 
 
@@ -201,11 +202,6 @@ class Stack:
 		samp_size = len(r)				# actual size of sample (might be less than gal_num*25)
 		self.samp_size = samp_size
 
-		# create gal_id arrays
-	#	en_gal_id = np.copy(gal_id)
-	#	ln_gal_id = np.copy(gal_id)
-
-
 		# create random numbered array for galaxy selection
 		if gal_num < 10:				# when gal_num < 10, has trouble hitting gal_num richness inside r200
 			excess = gal_num * 4.0 / 5.0
@@ -215,14 +211,15 @@ class Stack:
 		samp_num = gal_num + excess			# sample size of randomly generated numbers, start too low on purpose, then raise in loop
 		loop = True					# break condition
 		while loop == True:				# see method 0 comments on variables such as 'excess' and 'within' and 'end'
-			for j in range(3):			# before upping sample size, try to get a good sample a few times
+			for it in range(3):			# before upping sample size, try to get a good sample a few times
 				rando = npr.randint(0,samp_size,samp_num)
 				within = np.where(r[rando]<=r_crit200)[0]
 				if len(within) >= gal_num + excess:
 					loop = False
 			if len(within) < gal_num + excess:
 				samp_num += 2
-		### Build Ensemble
+
+		### Build Ensemble ###
 		if self.clean_ens == True:
 
 			r2,v2,en_gal_id,en_clus_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando],v[rando],en_gal_id[rando],en_clus_id[rando],gmags[rando],rmags[rand],imags[rando]]).T).T
@@ -236,18 +233,19 @@ class Stack:
 			end = within[:gal_num + excess + 1][-1]
 			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags = r[rando][:end],v[rando][:end],en_gal_id[rando][:end],en_clus_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]
 
-		### Build LOS
+		### Build LOS ###
+		# Set Sample
 		if gal_num < 10:
-			excess = gal_num * 4 / 5.0
+			excess = gal_num * 4.0 / 5.0
 		else:
-			excess = gal_num / 5.0
+			excess = gal_num * 2.0 / 5.0
 		try:
 			end = within[:gal_num + excess + 1][-1]
 			# shiftgapper
-			r2,v2,ln_gal_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],ln_gal_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
+			r2,v2,ln_gal_id2,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],ln_gal_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
 			# sort by rmags
 			sort = np.argsort(rmags2)
-			r2,v2,ln_gal_id,gmags2,rmags2,imags2 = r2[sort],v2[sort],ln_gal_id[sort],gmags2[sort],rmags2[sort],imags2[sort]
+			r2,v2,ln_gal_id2,gmags2,rmags2,imags2 = r2[sort],v2[sort],ln_gal_id2[sort],gmags2[sort],rmags2[sort],imags2[sort]
 			# feed back gal_num gals within r200
 			within = np.where(r2<r_crit200)[0]
 			end = within[:gal_num + 1][-1]
@@ -257,8 +255,15 @@ class Stack:
 			richness = 0		
 
 		# Make sure gal_num richness inside r200
+		run_time = time.asctime()
 		j = 0
 		while richness < gal_num:
+			## Ensure this loop doesn't get trapped forever
+			duration = (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
+			if duration > 30:
+				print "****Duration exceeded 30 seconds in LOS Buiding, manually broke loop****"
+				break
+			##
 			j += 1
 			loop = True
 			while loop == True:				
@@ -271,17 +276,18 @@ class Stack:
 					samp_num += 2
 			try:
 				end = within[:gal_num + excess + 1][-1]
-				r2,v2,ln_gal_id,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],ln_gal_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
+				r2,v2,ln_gal_id2,gmags2,rmags2,imags2 = self.C.shiftgapper(np.vstack([r[rando][:end],v[rando][:end],ln_gal_id[rando][:end],gmags[rando][:end],rmags[rando][:end],imags[rando][:end]]).T).T
 				within = np.where(r2<r_crit200)[0]
 				end = within[:gal_num + 1][-1]
 				richness = len(within)
 			except IndexError:
+				print '**** Raised Index Error on LOS Building****'
 				richness = 0
 
 			if j >= 100:
 				break
 
-		ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = r2[:end],v2[:end],ln_gal_id[:end],gmags2[:end],rmags2[:end],imags2[:end]
+		ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = r2[:end],v2[:end],ln_gal_id2[:end],gmags2[:end],rmags2[:end],imags2[:end]
 		# Done! Now we have en_r and ln_r arrays (ensemble and line of sight arrays)
 		
 		return en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags,samp_size
@@ -353,16 +359,19 @@ class SelfStack:
 				r, v, projected_pos = self.U.line_of_sight(Gal_P[j],Gal_V[j],Halo_P[k],Halo_V[k],k)
 
 			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
-			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
-			gal_id_count += len(r)
+			en_gal_id = np.arange(len(r))
 			ln_gal_id = np.arange(len(r))
 			en_clus_id = np.array([HaloID[k]]*len(r),int)
 
 			# Limit Data in Phase Space
-			r,v,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,en_gal_id,en_clus_id,ln_gal_id,G_Mags[l],R_Mags[l],I_Mags[l],R_crit200[s],HVD[s])
+			r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,samp_size = self.U.limit_gals(r,v,en_gal_id,en_clus_id,ln_gal_id,G_Mags[j],R_Mags[j],I_Mags[j],R_crit200[k],HVD[k])
 
 			# Build LOS and Ensemble, with given method of stacking
-			en_r,en_v,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,HaloData.T[s],l)	
+			en_r,en_v,en_gal_id,en_clus_id,en_gmags,en_rmags,en_imags,ln_r,ln_v,ln_gal_id,ln_gmags,ln_rmags,ln_imags = self.S.build_ensemble(r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,HaloData.T[k],l)	
+
+			# If Scale data before stack is desired
+			if self.scale_data == True:
+				en_r = self.U.scale_gals(en_r,R_crit200[k])				
 
 			# Build Ensemble Arrays
 			ens_r.extend(en_r)
@@ -370,6 +379,8 @@ class SelfStack:
 			ens_gmags.extend(en_gmags)
 			ens_rmags.extend(en_rmags)
 			ens_imags.extend(en_imags)
+			ens_gal_id.extend(np.array(en_gal_id,int))
+			ens_clus_id.extend(np.array(en_clus_id,int))
 			
 			# Calculate LOS HVD (this is after shiftgapper) if run_los == True
 			if self.run_los == True:
@@ -401,6 +412,7 @@ class SelfStack:
 			# Append LOS Data Arrays
 			los_r.append(ln_r)
 			los_v.append(ln_v)
+			los_gal_id.append(np.array(ln_gal_id,int))
 			los_gmags.append(ln_gmags)
 			los_rmags.append(ln_rmags)
 			los_imags.append(ln_imags)
@@ -412,21 +424,29 @@ class SelfStack:
 			sample_size.append(samp_size)
 			pro_pos.append(projected_pos)
 
+
+		# If scale data == True, re-scale by ensemble r200
+		if self.scale_data == True:
+			ens_r = np.array(ens_r)*R_crit200[k]
+
 		# Shiftgapper for Ensemble Interloper treatment
-		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags = self.C.shiftgapper(np.vstack([ens_r,ens_v,ens_gmags,ens_rmags,ens_imags]).T).T
+		ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags = self.C.shiftgapper(np.vstack([ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags]).T).T
 
 		# Sort by R_Mag
 		sort = np.argsort(ens_rmags)
-		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags = ens_r[sort],ens_v[sort],ens_gmags[sort],ens_rmags[sort],ens_imags[sort]
+		ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags = ens_r[sort],ens_v[sort],ens_gal_id[sort],ens_clus_id[sort],ens_gmags[sort],ens_rmags[sort],ens_imags[sort]
 
 		# Reduce system to gal_num richness within r200
 		within = np.where(ens_r <= R_crit200[k])[0]
 		end = within[:self.gal_num*self.line_num + 1][-1]
 		ens_r = ens_r[:end]
 		ens_v = ens_v[:end]
+		ens_gal_id = ens_gal_id[:end]
+		ens_clus_id = ens_clus_id[:end]
 		ens_gmags = ens_gmags[:end]
 		ens_rmags = ens_rmags[:end]
 		ens_imags = ens_imags[:end]
+
 
 		# Calculate HVD
 		en_hvd = astStats.biweightScale(np.copy(ens_v)[np.where(ens_r<=R_crit200[k])],9.0)
