@@ -1,7 +1,7 @@
 '''
 This file contains run-dependent parameters used by caustic_mass_stack2D.py
 
-file location : /glusterfs/users/caustics1/nkern/OSDCStacking 
+file location : /glusterfs/users/caustics1/nkern/OSDCStacking/@@data_loc@@/@@write_loc@@
 '''
 
 ## Run Dependent Constants ##
@@ -14,6 +14,7 @@ cell_num	= @@cell_num@@			# Cell Number ID corresponding to given gal_num & line
 table_num	= @@table_num@@			# Table Re-Run Version	
 run_los 	= @@run_los@@			# If fed 8th arg value as True, run_los
 mass_scat	= @@mass_scat@@			# If mass_mix = True, fractional scatter induced into table mass
+center_scat	= @@center_scat@@		# If guessing halo center, fractional induced scatter into known center
 avg_meth	= @@avg_meth@@			# If bin stacking, by which method do you average bin properties? (ex. median, mean)
 bootstrap_num	= @@bootstrap_num@@		# Highest directory marker for bootstrap data, ex. bootstrap1
 bootstrap_rep	= @@bootstrap_rep@@		# Bootstrap repetition directory marker, ex. bootstrap1/rep1

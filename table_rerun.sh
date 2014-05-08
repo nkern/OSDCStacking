@@ -6,6 +6,10 @@
 ######################
 
 ## Initialize Configuration Arrays and Other Constants
+self_stack=True                                                 # Self Stacking or Bin Stacking?
+mass_mix=False                                                  # If Bin Stacking, Mass Mixing or not?
+center_guess=None						# Vary halo center? 'r', 'v', or None
+
 cell_num=($(seq 1 49))						# Number of Cells
 line_num=(2 5 10 15 25 50 100)					# Line of Sight Number 
 gal_num=(5 10 15 25 50 100 150)					# Ngal number
@@ -19,6 +23,7 @@ data_loc="selfstack/ss_run_table"$table_num			# Highest Directory for Data
 write_stem="ss_m1_run"						# Stem of write_loc directory
 data_loc="selfstack/ss_run_table$table_num"			# Highest Directory for Data
 base_dir="/glusterfs/users/caustics1/nkern/OSDCStacking"	# Base Directory
+
 
 ## Go To Stacking Directory
 cd $base_dir 
@@ -45,11 +50,17 @@ do
 		dir=$write_stem$k
 		echo "Working on Directory: $dir..."
 		m=0
-		for n in $(seq 1 $(($halo_num/${line_num[$j]}/${job_num[$j]})) $(($halo_num/${line_num[$j]})))
+		if [ $self_stack == 'True' ]
+		then 
+			iter=$(seq 1 $(($halo_num/${job_num[$j]})) $(($halo_num)))
+		else 
+			iter=$(seq 1 $(($halo_num/${line_num[$j]}/${job_num[$j]})) $(($halo_num/${line_num[$j]})))
+		fi
+		for n in $iter
 		do	
 			n=$((n-1))
 			if [ -a $data_loc/$dir/Ensemble_$n\_Data.pkl ]
-				then
+			then
 				echo -n
 			else
 				DIRS+=($k)
@@ -131,7 +142,7 @@ do
 	sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $_data_loc/$_write_loc/script_rerun.sh
 
 	# Submit Script to PBS via qsub
-	#qsub $_data_loc/$_write_loc/script_rerun.sh 
+	qsub $_data_loc/$_write_loc/script_rerun.sh 
 	echo ""
 
 	m=$((m+1))

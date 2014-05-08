@@ -44,6 +44,7 @@ class Stack:
 		- CausticSurface.main()
 		- MassCalc.main()
 		'''
+		run_time = time.asctime()
 
 		## Unpack HaloData Array into Namespace
 		# Define Cluster Variables Initially as Individual Halo Variables (Used for self stack and for LOS mass estimates)
@@ -59,6 +60,7 @@ class Stack:
 			text = '## Working On Cluster #'+str(k)+'\n## Line of Sight #'+str(l)+''
 		self.U.print_separation(text,type=2)
 
+		print 'First Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
 		richness = len( np.where(r<r_crit200)[0])
 		print 'Richness Within R200 =',richness
 		print 'Calculated HVD =',np.floor(derived_hvd)
@@ -78,7 +80,8 @@ class Stack:
 		self.C.img_tot = self.C.img/np.max(np.abs(self.C.img))
  		self.C.img_grad_tot = self.C.img_grad/np.max(np.abs(self.C.img_grad))
  		self.C.img_inf_tot = self.C.img_inf/np.max(np.abs(self.C.img_inf))
-		
+	
+		print 'Second Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
 		## Define Beta Profile
 		beta_profile = False		# beta profile as a funct of radius?
 		if beta_profile == True:
@@ -95,9 +98,12 @@ class Stack:
 		else:
 			self.CS = self.CausticSurface(np.zeros(0),self.C.x_range,self.C.y_range,self.C.img_tot,r200=r_crit200,halo_vdisp=derived_hvd,beta=self.beta)
 
+		print 'Third Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
+
 		## Mass Calculation, leave clus_z blank for now
 		self.MC = self.MassCalc(self.C.x_range,self.CS.Ar_finalD,derived_hvd,0,r200=r_crit200,beta=self.beta,fbr=self.fbeta,H0=self.H0)
-
+		print 'Fourth Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
+		
 		return self.MC.M200,self.MC.M200_est,self.CS.Ar_finalD,self.CS.vesc_fit	
 
 
@@ -333,6 +339,7 @@ class SelfStack:
 
 	def self_stack_clusters(self,HaloID,HaloData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j):
 		''' Building Ensemble Cluster and Calculating Property Statistics '''
+
 		## Unpack HaloData array 
 		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD = HaloData
 
@@ -401,14 +408,14 @@ class SelfStack:
 						ln_hvd = np.std(np.copy(ln_v)[ln_within])
 			else:
 				ln_hvd = []
-
+			
 			# Run Caustic Technique for LOS mass estimation if run_los == True
 			if self.run_los == True:
 				ln_caumass,ln_caumass_est,ln_causurf,ln_nfwsurf = self.S.kernel_caustic_masscalc(ln_r,ln_v,HaloData.T[k],np.zeros(2),ln_hvd,k,l)
 				print 'j = '+str(j)+', k = '+str(k)+', l = '+str(l)
 			else:
 				ln_caumass,ln_caumass_est,ln_causurf,ln_nfwsurf = [],[],[],[]
-	
+
 			# Append LOS Data Arrays
 			los_r.append(ln_r)
 			los_v.append(ln_v)
