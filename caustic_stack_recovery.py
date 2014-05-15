@@ -39,7 +39,7 @@ class Recover(universal):
 		pass
 
 
-	def recover(self,write_loc=write_loc,write_stem=None,raw_data=False,ss=True,mm=False,go_global=True,ens_only=True,data_loc=None,bootstrap=False):
+	def recover(self,write_loc=write_loc,write_stem=None,raw_data=False,ss=True,mm=False,go_global=True,ens_only=True,data_loc=None,bootstrap=False,avg_meth=None):
 
 		"""
 		This function uploads the pickle files from directory stack_data and configures them into multi dimensional arrays.
@@ -66,6 +66,7 @@ class Recover(universal):
 		ENS_GAL_ID,LOS_GAL_ID,ENS_CLUS_ID,ENS_R3D,ENS_V3D = [],[],[],[],[]
 		ENS_MEM = []
 		BOOTSTRAP_SELECT = []
+		ENS_R200_EST = []
 
 		# Initialization step 
 		if data_loc==None:	
@@ -88,9 +89,6 @@ class Recover(universal):
 		if self.ss:	self.halo_range = range(varib['halo_num'])
 		else:	self.halo_range = range(varib['halo_num']/varib['line_num'])
 
-		# Assign stack_data vars to object 'd'
-		d = AttrDict(stack_data)
-
                 ## Get Halo Data
                 # Load and Sort Halos by Mass
                 HaloID,HaloData = self.U.load_halos()
@@ -110,40 +108,45 @@ class Recover(universal):
 				HaloData,HaloData_init = final_data['HaloData'],final_data['HaloData_init'][0:6]
 				M_crit200,R_crit200,Z,SRAD,ESRAD,HVD = HaloData
 				BinData = HaloData_init.T[mass_mix_match].T
-			BinData = self.U.Bin_Calc(BinData,varib,avg_meth=varib['avg_meth'])
+			if avg_meth == None:
+				BinData = self.U.Bin_Calc(BinData,varib,avg_meth=varib['avg_meth'])
+			else:
+				BinData = self.U.Bin_Calc(BinData,varib,avg_meth=avg_meth)	
 			BIN_M200,BIN_R200,BIN_HVD = BinData
 
 
 		# Append stack_data to major lists
-		ENS_R.append(d.ens_r)
-		ENS_V.append(d.ens_v)
-		ENS_GMAGS.append(d.ens_gmags)
-		ENS_RMAGS.append(d.ens_rmags)
-		ENS_IMAGS.append(d.ens_imags)
-		ENS_HVD.append(float(d.ens_hvd))
-		ENS_CAUMASS.append(float(d.ens_caumass))
-		ENS_CAUMASS_EST.append(float(d.ens_caumass_est))
-		ENS_CAUSURF.append(d.ens_causurf)
-		ENS_NFWSURF.append(d.ens_nfwsurf)
-		LOS_R.append(d.los_r)
-		LOS_V.append(d.los_v)
-		LOS_GMAGS.append(d.los_gmags)
-		LOS_RMAGS.append(d.los_rmags)
-		LOS_IMAGS.append(d.los_imags)
-		LOS_HVD.append(d.los_hvd)
-		LOS_CAUMASS.append(d.los_caumass)
-		LOS_CAUMASS_EST.append(d.los_caumass_est)
-		LOS_CAUSURF.append(d.los_causurf)
-		LOS_NFWSURF.append(d.los_nfwsurf)
-		SAMS.append(d.sample_size)
-		PRO_POS.append(d.pro_pos)
-		ENS_GP3D.append(d.ens_gp3d)
-		ENS_GV3D.append(d.ens_gv3d)
-		LOS_GP3D.append(d.los_gp3d)
-		LOS_GV3D.append(d.los_gv3d)
-		ENS_GAL_ID.append(d.ens_gal_id)
-		LOS_GAL_ID.append(d.los_gal_id)
-		ENS_CLUS_ID.append(d.ens_clus_id)
+		
+		self.app('ens_r',stack_data,ENS_R)
+		self.app('ens_v',stack_data,ENS_V)
+		self.app('ens_gmags',stack_data,ENS_GMAGS)
+		self.app('ens_rmags',stack_data,ENS_RMAGS)
+		self.app('ens_imags',stack_data,ENS_IMAGS)
+		self.app('ens_hvd',stack_data,ENS_HVD)
+		self.app('ens_caumass',stack_data,ENS_CAUMASS)
+		self.app('ens_caumass_est',stack_data,ENS_CAUMASS_EST)
+		self.app('ens_causurf',stack_data,ENS_CAUSURF)
+		self.app('ens_nfwsurf',stack_data,ENS_NFWSURF)
+		self.app('los_r',stack_data,LOS_R)
+		self.app('los_v',stack_data,LOS_V)
+		self.app('los_gmags',stack_data,LOS_GMAGS)
+		self.app('los_rmags',stack_data,LOS_RMAGS)
+		self.app('los_imags',stack_data,LOS_IMAGS)
+		self.app('los_hvd',stack_data,LOS_HVD)
+		self.app('los_caumass',stack_data,LOS_CAUMASS)
+		self.app('los_caumass_est',stack_data,LOS_CAUMASS_EST)
+		self.app('los_causurf',stack_data,LOS_CAUSURF)
+		self.app('los_nfwsurf',stack_data,LOS_NFWSURF)
+		self.app('sample_size',stack_data,SAMS)
+		self.app('pro_pos',stack_data,PRO_POS)
+		self.app('ens_gp3d',stack_data,ENS_GP3D)
+		self.app('ens_gv3d',stack_data,ENS_GV3D)
+		self.app('los_gp3d',stack_data,LOS_GP3D)
+		self.app('los_gv3d',stack_data,LOS_GV3D)
+		self.app('ens_gal_id',stack_data,ENS_GAL_ID)
+		self.app('los_gal_id',stack_data,LOS_GAL_ID)
+		self.app('ens_clus_id',stack_data,ENS_CLUS_ID)
+		self.app('ens_r200_est',stack_data,ENS_R200_EST)	
 
 		# Load 3D Data
 		if bootstrap == False:
@@ -164,46 +167,45 @@ class Recover(universal):
 			stack_data = input.load()
 				
 
-			# Update locals() dictionary with stack_data dictionary			
-			d = AttrDict(stack_data)
-
 			# Append stack_data to major lists
-			ENS_R.append(d.ens_r)
-			ENS_V.append(d.ens_v)
-			ENS_GMAGS.append(d.ens_gmags)
-			ENS_RMAGS.append(d.ens_rmags)
-			ENS_IMAGS.append(d.ens_imags)
-			ENS_HVD.append(float(d.ens_hvd))
-			ENS_CAUMASS.append(float(d.ens_caumass))
-			ENS_CAUMASS_EST.append(float(d.ens_caumass_est))
-			ENS_CAUSURF.append(d.ens_causurf)
-			ENS_NFWSURF.append(d.ens_nfwsurf)
-			LOS_R.append(d.los_r)
-			LOS_V.append(d.los_v)
-			LOS_GMAGS.append(d.los_gmags)
-			LOS_RMAGS.append(d.los_rmags)
-			LOS_IMAGS.append(d.los_imags)
-			LOS_HVD.append(d.los_hvd)
-			LOS_CAUMASS.append(d.los_caumass)
-			LOS_CAUMASS_EST.append(d.los_caumass_est)
-			LOS_CAUSURF.append(d.los_causurf)
-			LOS_NFWSURF.append(d.los_nfwsurf)
-			SAMS.append(d.sample_size)
-			PRO_POS.append(d.pro_pos)
-			ENS_GP3D.append(d.ens_gp3d)
-			ENS_GV3D.append(d.ens_gv3d)
-			LOS_GP3D.append(d.los_gp3d)
-			LOS_GV3D.append(d.los_gv3d)
-			ENS_GAL_ID.append(d.ens_gal_id)
-			LOS_GAL_ID.append(d.los_gal_id)
-			ENS_CLUS_ID.append(d.ens_clus_id)
+			
+			self.app('ens_r',stack_data,ENS_R)
+			self.app('ens_v',stack_data,ENS_V)
+			self.app('ens_gmags',stack_data,ENS_GMAGS)
+			self.app('ens_rmags',stack_data,ENS_RMAGS)
+			self.app('ens_imags',stack_data,ENS_IMAGS)
+			self.app('ens_hvd',stack_data,ENS_HVD)
+			self.app('ens_caumass',stack_data,ENS_CAUMASS)
+			self.app('ens_caumass_est',stack_data,ENS_CAUMASS_EST)
+			self.app('ens_causurf',stack_data,ENS_CAUSURF)
+			self.app('ens_nfwsurf',stack_data,ENS_NFWSURF)
+			self.app('los_r',stack_data,LOS_R)
+			self.app('los_v',stack_data,LOS_V)
+			self.app('los_gmags',stack_data,LOS_GMAGS)
+			self.app('los_rmags',stack_data,LOS_RMAGS)
+			self.app('los_imags',stack_data,LOS_IMAGS)
+			self.app('los_hvd',stack_data,LOS_HVD)
+			self.app('los_caumass',stack_data,LOS_CAUMASS)
+			self.app('los_caumass_est',stack_data,LOS_CAUMASS_EST)
+			self.app('los_causurf',stack_data,LOS_CAUSURF)
+			self.app('los_nfwsurf',stack_data,LOS_NFWSURF)
+			self.app('sample_size',stack_data,SAMS)
+			self.app('pro_pos',stack_data,PRO_POS)
+			self.app('ens_gp3d',stack_data,ENS_GP3D)
+			self.app('ens_gv3d',stack_data,ENS_GV3D)
+			self.app('los_gp3d',stack_data,LOS_GP3D)
+			self.app('los_gv3d',stack_data,LOS_GV3D)
+			self.app('ens_gal_id',stack_data,ENS_GAL_ID)
+			self.app('los_gal_id',stack_data,LOS_GAL_ID)
+			self.app('ens_clus_id',stack_data,ENS_CLUS_ID)
+			self.app('ens_r200_est',stack_data,ENS_R200_EST)	
 
 			# Load 3D Data
-			#if bootstrap == False:
-			#	ens_r3d,ens_v3d,ens_clus_index,ens_member = self.get_RV3D(ENS_GP3D,ENS_GV3D,ENS_CLUS_ID,HaloID,R_crit200,HVD,k=i)
-			#	ENS_R3D.append(ens_r3d)
-			#	ENS_V3D.append(ens_v3d)	
-			#	ENS_MEM.append(ens_member)
+			if bootstrap == False:
+				ens_r3d,ens_v3d,ens_clus_index,ens_member = self.get_RV3D(ENS_GP3D,ENS_GV3D,ENS_CLUS_ID,HaloID,R_crit200,HVD,k=i)
+				ENS_R3D.append(ens_r3d)
+				ENS_V3D.append(ens_v3d)	
+				ENS_MEM.append(ens_member)
 
 		print ''
 
@@ -213,9 +215,9 @@ class Recover(universal):
 		ENS_GMAGS = np.array(ENS_GMAGS)
 		ENS_RMAGS = np.array(ENS_RMAGS)
 		ENS_IMAGS = np.array(ENS_IMAGS)
-		ENS_HVD = np.array(ENS_HVD)
-		ENS_CAUMASS = np.array(ENS_CAUMASS)
-		ENS_CAUMASS_EST = np.array(ENS_CAUMASS_EST)
+		ENS_HVD = np.array(ENS_HVD).ravel()
+		ENS_CAUMASS = np.array(ENS_CAUMASS).ravel()
+		ENS_CAUMASS_EST = np.array(ENS_CAUMASS_EST).ravel()
 		ENS_CAUSURF = np.array(ENS_CAUSURF)
 		ENS_NFWSURF = np.array(ENS_NFWSURF)
 		LOS_R = np.array(LOS_R)
@@ -240,12 +242,13 @@ class Recover(universal):
 		ENS_R3D = np.array(ENS_R3D)
 		ENS_V3D = np.array(ENS_V3D)
 		ENS_MEM = np.array(ENS_MEM)
-		if bootstrap == True:
-			BOOTSTRAP_SELECT = np.array(BOOTSTRAP_SELECT)
+
+		ENS_R200_EST = np.array(ENS_R200_EST)
+		BOOTSTRAP_SELECT = np.array(BOOTSTRAP_SELECT)
 
 		if raw_data == True:
 			# Return to Namespaces depending on go_global
-			names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT']
+			names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT','ENS_R200_EST']
 			mydict = ez.create(names,locals())
 
                         # Add to final_data
@@ -281,7 +284,7 @@ class Recover(universal):
 
 
 		# Create a dictionary
-		names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ens_mbias','ens_mscat','los_mbias','los_mscat','ens_vbias','ens_vscat','los_vbias','los_vscat','ENS_MFRAC','ENS_VFRAC','LOS_MFRAC','LOS_VFRAC','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT']
+		names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ens_mbias','ens_mscat','los_mbias','los_mscat','ens_vbias','ens_vscat','los_vbias','los_vscat','ENS_MFRAC','ENS_VFRAC','LOS_MFRAC','LOS_VFRAC','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT','ENS_R200_EST']
 		mydict = ez.create(names,locals())
 
 		# Append to final_data
@@ -397,6 +400,13 @@ class Recover(universal):
 		return ens_r3d,ens_v3d,ens_clus_index,ens_member	
 
 
+	def app(self,key,dictionary,LIST):
+		'''
+		This function sees if the string key is one of the keys of dictionary
+		and if so, appends the dictionary[key] to LIST
+		'''
+		if key in dictionary.keys():
+			LIST.append(dictionary[key])
 
 
 class Work(Recover):
@@ -468,14 +478,18 @@ class Work(Recover):
 
 			# Make into arrays that resemble table
 			print 'Table Shape =',tab_shape
-			ENS_MBIAS,ENS_MSCAT,ENS_VBIAS,ENS_VSCAT = np.array(self.ENS_MBIAS).reshape(tab_shape),np.array(self.ENS_MSCAT).reshape(tab_shape),np.array(self.ENS_VBIAS).reshape(tab_shape),np.array(self.ENS_VSCAT).reshape(tab_shape)
-			LOS_MBIAS,LOS_MSCAT,LOS_VBIAS,LOS_VSCAT = np.array(self.LOS_MBIAS).reshape(tab_shape),np.array(self.LOS_MSCAT).reshape(tab_shape),np.array(self.LOS_VBIAS).reshape(tab_shape),np.array(self.LOS_VSCAT).reshape(tab_shape)
-			RUN_NUM,GAL_NUM,LINE_NUM = np.array(self.RUN_NUM).reshape(tab_shape),np.array(self.GAL_NUM).reshape(tab_shape),np.array(self.LINE_NUM).reshape(tab_shape) 
+			self.ENS_MBIAS,self.ENS_MSCAT,self.ENS_VBIAS,self.ENS_VSCAT = np.array(self.ENS_MBIAS).reshape(tab_shape),np.array(self.ENS_MSCAT).reshape(tab_shape),np.array(self.ENS_VBIAS).reshape(tab_shape),np.array(self.ENS_VSCAT).reshape(tab_shape)
+			self.LOS_MBIAS,self.LOS_MSCAT,self.LOS_VBIAS,self.LOS_VSCAT = np.array(self.LOS_MBIAS).reshape(tab_shape),np.array(self.LOS_MSCAT).reshape(tab_shape),np.array(self.LOS_VBIAS).reshape(tab_shape),np.array(self.LOS_VSCAT).reshape(tab_shape)
+			self.RUN_NUM,self.GAL_NUM,self.LINE_NUM = np.array(self.RUN_NUM).reshape(tab_shape),np.array(self.GAL_NUM).reshape(tab_shape),np.array(self.LINE_NUM).reshape(tab_shape) 
 
 			# Other Data Arrays
-			RICH_NUM = GAL_NUM*LINE_NUM
+			self.RICH_NUM = self.GAL_NUM*self.LINE_NUM
 
-			return (ENS_MBIAS,ENS_MSCAT,ENS_VBIAS,ENS_VSCAT,LOS_MBIAS,LOS_MSCAT,LOS_VBIAS,LOS_VSCAT,RUN_NUM,GAL_NUM,LINE_NUM,RICH_NUM)
+			# Create Dictionary
+			names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM']
+			dictionary = ez.create(names,self.__dict__)
+			
+			return dictionary
 
 
 		else:
@@ -535,24 +549,22 @@ work = True
 if work == True:
 	
 	table_num	= str(sys.argv[1])
-	iter_array	= np.arange(1,35)
-	tab_shape	= (4,7)
-	write_stem	= 'ss_m1_run'
-	write_loc	= 'ss_m1_run1'
-	data_loc	= 'selfstack/ss_run_table'+str(table_num)
-	ss		= True
-	mm		= False
+	iter_array	= np.arange(1,50)
+	tab_shape	= (7,7)
+	write_stem	= 'mm_m0_run'
+	write_loc	= 'mm_m0_run1'
+	data_loc	= 'mass_mix/mm_0.05_run_table'+str(table_num)
+	ss		= False
+	mm		= True
 	
 
 	kwargs = {'write_loc':write_loc,'raw_data':False,'ss':ss,'mm':mm,'go_global':False,'ens_only':True,'data_loc':data_loc}
 
 	data = W.load_all(kwargs=kwargs,write_stem=write_stem,iter_array=iter_array,tab_shape=tab_shape)
 
-	names = ('ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_MSCAT','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM')
+	names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_MSCAT','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM']
 
-	values = np.copy(data)
-
-	dictionary = dict(zip(names,values))
+	dictionary = ez.create(names,data)
 
 	file = open(root+'/nkern/OSDCStacking/'+data_loc+'/table_analysis.pkl','wb')
 

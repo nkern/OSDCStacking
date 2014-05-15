@@ -34,14 +34,14 @@ print "Loaded caustic_params from",sys.modules['caustic_params']
 
 ## FLAGS ##
 use_flux	= True				# Using flux or sophie
-self_stack	= True				# Run self-stack or bin-stack
-scale_data	= False				# Scale data by r200 if True
+self_stack	= False				# Run self-stack or bin-stack
+scale_data	= True				# Scale data by r200 if True
 write_data 	= True				# Write Data to Result directories if True
 light_cone	= False				# Input RA|DEC projection data if True, if False inputting x,y,z 3D data
 clean_ens	= False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set	= False				# 100 Halo Set or 2000 Halo Set
-mass_mix	= False				# Incorporate Mass Mixing Models?
-center_guess	= None				# 'r','v', or None. Inducing Scatter on halo r center, halo v center, or None.
+mass_mix	= True				# Incorporate Mass Mixing Models?
+cent_offset	= False				# Peform Halo Center Radius / Velocity Offset Analysis?
 bootstrap	= False				# Perform a bootstrapping technique to estimate error in mass estimation?
 
 ## CONSTANTS ##
@@ -78,17 +78,25 @@ if self_stack == True:								# Change Write Directory Depending on Parameters
 else:
 	data_loc = 'binstack/bs_run_table'+str(table_num)
 	write_loc = 'bs_m'+str(method_num)+'_run'+str(cell_num)			# Bin Stack data-write location
+	if center_guess == 'r':
+		data_loc = 'binstack/rguess_run_table'+str(table_num)
+	if center_guess == 'v':
+		data_loc = 'binstack/vguess_run_table'+str(table_num)
 	stack_range = np.arange(run_num*clus_num*line_num,run_num*clus_num*line_num+clus_num*line_num)
 	if mass_mix == True:							# Change write_loc if mass mixing
 		data_loc = 'mass_mix/mm_'+mass_scat+'_run_table'+str(table_num)
 		write_loc = 'mm_m'+str(method_num)+'_run'+str(cell_num)
-
+		if center_guess == 'r':
+			data_loc = 'mass_mix/rguess_run_table'+str(table_num)
+		if center_guess == 'v':
+			data_loc = 'mass_mix/vguess_run_table'+str(table_num)
+	
 if bootstrap == True:
 	write_loc = 'bo_m'+str(method_num)+'_run'+str(cell_num)
 	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
 
 ## Make dictionary for above constants
-keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','use_flux','write_data','light_cone','run_time','clean_ens','small_set','run_los','bootstrap','run_num','clus_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','center_guess']
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','use_flux','write_data','light_cone','run_time','clean_ens','small_set','run_los','bootstrap','run_num','clus_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','center_guess','cent_offset']
 varib = ez.create(keys,locals())
 
 ## INITIALIZATION ##
@@ -115,13 +123,13 @@ if mass_mix == True:
 	pre_run = False
 	if pre_run == True:	# Need to create 1 mass mix array that each flux job loads in as halo array
 		HaloID,HaloData,M_crit200_match,mass_mix_match = U.mass_mixing(HaloID,HaloData,float(mass_scat))
-		f = open(data_loc+'/mm_halo_array.pkl','wb')
+		f = open(root+'/nkern/OSDCStacking/'+data_loc+'/mm_halo_array.pkl','wb')
 		output = pkl.Pickler(f)
 		data = {'mass_mix_match':mass_mix_match,'HaloID':HaloID,'HaloData':HaloData,'M_crit200_match':M_crit200_match,'HaloID_init':HaloID_init,'HaloData_init':HaloData_init}		
 		output.dump(data)
 		f.close()
 	else:
-		f = open(data_loc+'/mm_halo_array.pkl','rb')
+		f = open(root+'/nkern/OSDCStacking/'+data_loc+'/mm_halo_array.pkl','rb')
 		input = pkl.Unpickler(f)
 		globals().update(input.load())
 
@@ -177,7 +185,7 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 			stack_data = BS.bin_stack_clusters(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
 
 	# Unpack data
-	ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos = stack_data
+	ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,ens_r200_est,vel_avg = stack_data
 
 
 	# Get 3D data
@@ -194,10 +202,10 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 
 	# Combine into stack_data
 	if run_los == False:
-                keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','x_range','sample_size','pro_pos','ens_gp3d','ens_gv3d','BS.bootstrap_select']
+                keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','x_range','sample_size','pro_pos','ens_gp3d','ens_gv3d','BS.bootstrap_select','ens_r200_est','vel_avg']
 	
 	else:
-		keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','los_r','los_v','los_gal_id','los_gmags','los_rmags','los_imags','los_hvd','los_caumass','los_caumass_est','los_causurf','los_nfwsurf','x_range','sample_size','pro_pos','ens_gp3d','ens_gv3d','los_gp3d','los_gv3d','BS.bootstrap_select']
+		keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','los_r','los_v','los_gal_id','los_gmags','los_rmags','los_imags','los_hvd','los_caumass','los_caumass_est','los_causurf','los_nfwsurf','x_range','sample_size','pro_pos','ens_gp3d','ens_gv3d','los_gp3d','los_gv3d','BS.bootstrap_select','ens_r200_est','vel_avg']
 	stack_data = ez.create(keys,locals())
 
 	# Append to STACK_DATA

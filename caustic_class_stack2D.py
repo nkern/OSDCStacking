@@ -20,6 +20,7 @@ import matplotlib.pyplot as mp
 from mpl_toolkits.mplot3d import Axes3D
 import time
 import DictEZ as ez
+from astropy.stats import sigma_clip
 
 
 ## Program ##
@@ -70,7 +71,7 @@ class Stack:
 		if mirror == True:
 			rvalues,vvalues = np.append(r,r),np.append(v,-v)		
 		else:
-			rvalues,vvalues = r,v
+			rvalues,vvalues = np.copy(r),np.copy(v)
 
 		## Perform Kernel Density Estimation
 		# Set Kernel Density Phase Space limits in Mpc and km/s
@@ -92,11 +93,10 @@ class Stack:
 			self.beta = np.ones(self.C.x_range.shape)*self.beta
 
 		## Caustic Surface Calculation
-		# This function takes RA, DEC and Z as first input, for now it is empty, all relavent files go to class dictionary
 		if self.small_set == True:
-			self.CS = self.CausticSurface(np.zeros(0),self.C.x_range,self.C.y_range,self.C.img_tot,r200=r_crit200,halo_scale_radius=srad,halo_scale_radius_e=esrad,halo_vdisp=derived_hvd,beta=self.beta)
+			self.CS = self.CausticSurface(np.vstack([rvalues,vvalues]).T,self.C.x_range,self.C.y_range,self.C.img_tot,r200=r_crit200,halo_scale_radius=srad,halo_scale_radius_e=esrad,halo_vdisp=derived_hvd,beta=self.beta)
 		else:
-			self.CS = self.CausticSurface(np.zeros(0),self.C.x_range,self.C.y_range,self.C.img_tot,r200=r_crit200,halo_vdisp=derived_hvd,beta=self.beta)
+			self.CS = self.CausticSurface(np.vstack([rvalues,vvalues]).T,self.C.x_range,self.C.y_range,self.C.img_tot,r200=r_crit200,halo_vdisp=derived_hvd,beta=self.beta)
 
 		print 'Third Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
 
@@ -325,7 +325,7 @@ class Stack:
 
 class SelfStack:
 
-	def __init__(self,varib,U,C,S,CausticSurface,MassCalc):
+	def __init__(self,varib,U,C,S,CS,MC):
 		''' Initial function for class selfstack '''
 		# Adding dictionary varib to class namespace
 		self.__dict__.update(varib)
@@ -333,8 +333,8 @@ class SelfStack:
 		self.U = U		
 		self.C = C
 		self.S = S
-		self.CausticSurface = CausticSurface
-		self.MassCalc = MassCalc
+		self.CS = CS
+		self.MC = MC
 
 
 	def self_stack_clusters(self,HaloID,HaloData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j):
@@ -412,6 +412,7 @@ class SelfStack:
 			# Run Caustic Technique for LOS mass estimation if run_los == True
 			if self.run_los == True:
 				ln_caumass,ln_caumass_est,ln_causurf,ln_nfwsurf = self.S.kernel_caustic_masscalc(ln_r,ln_v,HaloData.T[k],np.zeros(2),ln_hvd,k,l)
+				ln_r_est.append(S.MC.r200_est)
 				print 'j = '+str(j)+', k = '+str(k)+', l = '+str(l)
 			else:
 				ln_caumass,ln_caumass_est,ln_causurf,ln_nfwsurf = [],[],[],[]
@@ -460,6 +461,7 @@ class SelfStack:
 
 		# Run Caustic Technique! 
 		en_caumass,en_caumass_est,en_causurf,en_nfwsurf = self.S.kernel_caustic_masscalc(ens_r,ens_v,HaloData.T[k],np.zeros(2),en_hvd,k)
+		ens_r200_est = self.S.MC.r200_est
 
 		# Append Ensemble Data Arrays
 		ens_hvd.append(en_hvd)
@@ -478,14 +480,14 @@ class SelfStack:
 		los_gal_id = np.array(los_gal_id)
 		ens_clus_id = np.array(ens_clus_id,int)
 
-		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos
+		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos,ens_r200_est
 
 
 
 
 class BinStack:
 
-	def __init__(self,varib,U,C,S,CausticSurface,MassCalc):
+	def __init__(self,varib,U,C,S,CS,MC):
 		''' Initial function for class BinStack '''
 		# Adding dictionary varib to class namespace
 		self.__dict__.update(varib)
@@ -493,8 +495,8 @@ class BinStack:
 		self.U = U		
 		self.C = C
 		self.S = S
-		self.CausticSurface = CausticSurface
-		self.MassCalc = MassCalc
+		self.CS = CS
+		self.MC = MC
 
 
 
@@ -507,13 +509,14 @@ class BinStack:
 		## Define Arrays for Building Ensemble and LOS
 		# Ensemble Arrays:	[Successive Ensemble Number][Data]
 		# Line of Sight Arrays:	[Line Of Sight][Data]
-		ens_r,ens_v,ens_gmags,ens_rmags,ens_imags,ens_hvd = [],[],[],[],[],[]
+		ens_r,ens_r200_est,ens_v,ens_gmags,ens_rmags,ens_imags,ens_hvd = [],[],[],[],[],[],[]
 		ens_caumass, ens_caumass_est, ens_causurf, ens_nfwsurf = [], [], [], []
 		los_r,los_v,los_gmags,los_rmags,los_imags,los_hvd = [],[],[],[],[],[]
 		los_caumass, los_caumass_est, los_causurf, los_nfwsurf = [], [], [], []
 		sample_size,pro_pos = [],[]
 		ens_gal_id,los_gal_id = [],[]
 		ens_clus_id = []
+		vel_avg = []
 		gal_id_count = 0
 
 		## Loop over lines of sight (different clusters)
@@ -527,6 +530,13 @@ class BinStack:
 			else:
 				# Line of Sight Calculation for naturally 3D data
 				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
+
+			# Do Center Analysis if Desired
+			if self.center_guess == 'v':
+				print 'shifting gal velocity'
+				v_avg = self.v_shift(r,v,R_Mags[l],R_crit200[s])	
+				v -= v_avg
+				vel_avg.append(v_avg)
 
 			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
 			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
@@ -624,6 +634,7 @@ class BinStack:
 
 		# Run Caustic Technique!
 		en_caumass,en_caumass_est,en_causurf,en_nfwsurf = self.S.kernel_caustic_masscalc(ens_r,ens_v,HaloData.T[k],BinData.T[k],en_hvd,k)
+		ens_r200_est = self.S.MC.r200_est
 
 		# Append Ensemble Data Arrays
 		ens_hvd.append(en_hvd)
@@ -641,8 +652,9 @@ class BinStack:
 		ens_gal_id = np.array(ens_gal_id,int)
 		los_gal_id = np.array(los_gal_id)
 		ens_clus_id = np.array(ens_clus_id,int)
+		vel_avg = np.array(vel_avg)
 
-		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos	
+		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos,ens_r200_est,vel_avg
 
 
 	def bin_stack_bootstrap(self,HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j):
@@ -818,13 +830,34 @@ class BinStack:
 		return ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,self.C.x_range,sample_size,pro_pos
 
 
+	def v_shift(self,r_init,v_init,rmag_init,r200):
+		'''
+		This function does minimal interloper removal to set sample, then averages galaxy data
+		to get average velocity center, and shifts data to that center
+		'''	
+		# Set Hard Constraints
+		cut = np.where((r_init<1)&(v_init<5000)&(v_init>-5000))
+		r,v,rmag= r_init[cut],v_init[cut],rmag_init[cut]
 
+		# Rough sigma clip
+		clip = ~sigma_clip(v,iters=None,sig=3).mask	
+		r_clip,v_clip,rmag_clip = r[clip],v[clip],rmag[clip]
 
+		# Take Ngal Constraints
+		mag_sort = np.argsort(rmag)
+		r = r[mag_sort]
+		v = v[mag_sort]
+		rmag = rmag[mag_sort]
+		r = r[0:self.gal_num]
+		v = v[0:self.gal_num]
+		rmag = rmag[0:self.gal_num]
+		
+		# Find Average
+		v_avg = np.mean(v_clip)
+		print 'v_avg =',v_avg
 
-
-
-
-
+		# Output results
+		return v_avg
 
 
 

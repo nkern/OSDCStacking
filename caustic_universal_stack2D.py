@@ -126,7 +126,7 @@ class universal:
 		# Turn into array
 		gmags,rmags,imags = np.array(gmags,float),np.array(rmags,float),np.array(imags,float)
 		# remove BCG from sample
-		BCG = np.where(gpx != hpx)
+		BCG = np.where((gpx != hpx)&(gpy != hpy)&(gpz != hpz))
 
 		return np.vstack([ gpx[BCG], gpy[BCG], gpz[BCG], gvx[BCG], gvy[BCG], gvz[BCG], gmags[BCG], rmags[BCG], imags[BCG] ])
 
@@ -196,6 +196,11 @@ class universal:
 		halo_dist = ((halo_p[0]-new_pos[0])**2 + (halo_p[1]-new_pos[1])**2 + (halo_p[2]-new_pos[2])**2)**0.5
 		halo_pos_unit = np.array([halo_p[0]-new_pos[0],halo_p[1]-new_pos[1],halo_p[2]-new_pos[2]]) / halo_dist
 		halo_vlos = np.dot(halo_pos_unit, halo_v)
+
+		# If Center Offsetting is desired
+		self.cent_offset = False
+		if self.cent_offset == True:
+			halo_dist,halo_pos_unit,halo_vlos,halo_p,halo_v,new_pos = self.center_offset(halo_dist,halo_pos_unit,halo_vlos,halo_p,halo_v,new_pos)
 
 		# New Galaxy Information
 		gal_p = np.array(gal_p)
@@ -290,7 +295,7 @@ class universal:
 		# Unpack Array
 		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 		
-		# Create Gaussian distribution about 1 with width mass_scat, length HaloID.size
+		# Create lognormal distribution about 1 with width mass_scat, length HaloID.size
 		mass_mix = random.lognormal(0,mass_scat,len(HaloID))
 
 		# Apply Mass Scatter
@@ -320,6 +325,23 @@ class universal:
 
 		return HaloID,HaloData,M_crit200_match,sort
 		
+
+	def center_vel_guess(self,HaloID,HaloData,center_scat):
+		'''
+		This function performs a similar procedure as mass mixing
+			but induces a scatter into the cluster velocity center
+		'''
+
+		# Unpack Array
+		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
+
+		# Create Gaussian distribution about 
+		center_guess = random.normal(1,center_scat,len(HaloID))
+
+		# Apply scatter
+			
+		
+
  
 	def id_match(self,ID1,ID2,data=None):
 		'''
@@ -410,6 +432,40 @@ class universal:
 
 		return np.array([ens_gpx3d,ens_gpy3d,ens_gpz3d]),np.array([ens_gvx3d,ens_gvy3d,ens_gvz3d]),np.array([los_gpx3d,los_gpy3d,los_gpz3d]),np.array([los_gvx3d,los_gvy3d,los_gvz3d])
 
+
+	def avg_center(self):
+		'''
+		This funtion takes raw galaxy data from halos and performs a minimal
+		sigma clipping routine (or something similar) to get a somewhat clean
+		sample of halo members. Then it finds the average velocity to estimate
+		how bad a worst case scenario estimate of the velocity center is.
+		'''
+		pass	
+
+	def center_offset(self,halo_dist,halo_pos_unit,halo_vlos,halo_p,halo_v,new_pos):
+		'''
+		This function randomely offsets a halo center by
+		some amount radially in Mpc, and some amount in velocity
+		'''
+		# Find Unit Vector Perpendicular to Halo Center Vector and X-axis of Box
+		normal_vec = np.cross(halo_pos_unit,np.array([1,0,0]))
+		normal_vec /= np.linalg.norm(normal_vec)
+
+		# Get Radial Offset in Mpc
+		r_offset = random.normal(0,r_scat,1)[0]
+
+		# Get Veloctiy Offset in km/s
+		v_offset = random.normal(0,v_scat,1)[0]
+
+		# Perform Center Offset
+		halo_p += normal_vec*r_offset
+		halo_vlos += v_offset
+
+		# Re calculate
+		halo_dist = ((halo_p[0]-new_pos[0])**2 + (halo_p[1]-new_pos[1])**2 + (halo_p[2]-new_pos[2])**2)**0.5
+		halo_pos_unit = np.array([halo_p[0]-new_pos[0],halo_p[1]-new_pos[1],halo_p[2]-new_pos[2]]) / halo_dist
+
+		return halo_dist,halo_pos_unit,halo_vlos,halo_p,halo_v,new_pos
 
 	def print_varibs(self,varib):
 		print "Start Time		=",time.asctime()

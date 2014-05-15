@@ -6,8 +6,8 @@
 ######################
 
 ## Initialize Configuration Arrays and Other Constants
-self_stack=True                                                 # Self Stacking or Bin Stacking?
-mass_mix=False                                                  # If Bin Stacking, Mass Mixing or not?
+self_stack=False                                                # Self Stacking or Bin Stacking?
+mass_mix=True                                                  # If Bin Stacking, Mass Mixing or not?
 center_guess=None						# Vary halo center? 'r', 'v', or None
 
 cell_num=($(seq 1 49))						# Number of Cells
@@ -16,14 +16,13 @@ gal_num=(5 10 15 25 50 100 150)					# Ngal number
 clus_num=(75 30 15 10 6 3 1)					# Number of Ens Clusters done per instance
 job_num=(14 14 14 14 14 14 21)					# Number of Jobs Submitted
 halo_num=2100							# Number of Halos in Sample
-method_num=1							# Ensemble Build Method
-table_num=1							# Version of entire run table
-mass_scat=None							# If mass mixing, induced fractional scatter
-data_loc="selfstack/ss_run_table"$table_num			# Highest Directory for Data
-write_stem="ss_m1_run"						# Stem of write_loc directory
-data_loc="selfstack/ss_run_table$table_num"			# Highest Directory for Data
+method_num=0							# Ensemble Build Method
+table_num=2							# Version of entire run table
+mass_scat="'0.05'"							# If mass mixing, induced fractional scatter
+write_stem="mm_m0_run"						# Stem of write_loc directory
+data_loc="mass_mix/mm_0.05_run_table$table_num"			# Highest Directory for Data
 base_dir="/glusterfs/users/caustics1/nkern/OSDCStacking"	# Base Directory
-
+job_name="MASS-MIX"                                            # PBS Job Name Stem
 
 ## Go To Stacking Directory
 cd $base_dir 
@@ -139,7 +138,7 @@ do
 	_write_loc="$write_stem${cell_num[$k]}"
 
 	# Create script_rerun.sh file
-	sed -e "s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $_data_loc/$_write_loc/script_rerun.sh
+	sed -e "s:@@job_name@@:$job_name:g;s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $_data_loc/$_write_loc/script_rerun.sh
 
 	# Submit Script to PBS via qsub
 	qsub $_data_loc/$_write_loc/script_rerun.sh 

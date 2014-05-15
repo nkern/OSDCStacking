@@ -201,14 +201,15 @@ mp.tick_params(axis='x',labeltop='off',labelbottom='on')
 mp.title("Ensemble Mass Scatter")
 
 ### ENS_VBIAS Density Map
-mp.matshow(ENS_VBIAS,cmap='jet',vmin=-.15,vmax=.15)
+mp.matshow(ENS_VBIAS.T[1:].T[1:],cmap='jet',vmin=-.15,vmax=.15)
 cbar = mp.colorbar()
 cbar.set_label('Vel. Disp Bias',fontsize=12)
 mp.grid()
-mp.xticks([0,1,2,3,4,5,6],[2,5,10,15,25,50,100])
-mp.yticks([0,1,2,3,4,5,6],[5,10,15,25,50,100,150])
+mp.xticks([0,1,2,3,4,5],[5,10,15,25,50,100])
+mp.yticks([0,1,2,3,4,5],[10,15,25,50,100,150])
 mp.xlabel('Clusters per Bin (LOS)',fontsize=15)
 mp.ylabel('Galaxies per Cluster (Ngal)',fontsize=15)
+mp.tick_params(axis='x',labeltop='off',labelbottom='on')
 mp.title("Ensemble Vel. Disp Bias")
 
 ### ENS_VSCAT Density Map

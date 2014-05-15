@@ -16,6 +16,7 @@ run_los 	= @@run_los@@			# If fed 8th arg value as True, run_los
 mass_scat	= @@mass_scat@@			# If mass_mix = True, fractional scatter induced into table mass
 center_scat	= @@center_scat@@		# If guessing halo center, fractional induced scatter into known center
 avg_meth	= @@avg_meth@@			# If bin stacking, by which method do you average bin properties? (ex. median, mean)
+center_guess	= @@center_guess@@		# Either 'r', 'v', or None.
 bootstrap_num	= @@bootstrap_num@@		# Highest directory marker for bootstrap data, ex. bootstrap1
 bootstrap_rep	= @@bootstrap_rep@@		# Bootstrap repetition directory marker, ex. bootstrap1/rep1
 
