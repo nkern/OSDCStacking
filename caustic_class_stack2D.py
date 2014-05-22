@@ -22,7 +22,6 @@ import time
 import DictEZ as ez
 from astropy.stats import sigma_clip
 
-
 ## Program ##
 
 class Stack:
@@ -461,7 +460,7 @@ class SelfStack:
 
 		# Run Caustic Technique! 
 		en_caumass,en_caumass_est,en_causurf,en_nfwsurf = self.S.kernel_caustic_masscalc(ens_r,ens_v,HaloData.T[k],np.zeros(2),en_hvd,k)
-		ens_r200_est = self.S.MC.r200_est
+		ens_r200_est = float(self.S.MC.r200_est)
 
 		# Append Ensemble Data Arrays
 		ens_hvd.append(en_hvd)
@@ -500,7 +499,7 @@ class BinStack:
 
 
 
-	def bin_stack_clusters(self,HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j):
+	def bin_stack_clusters(self,HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j,PRO_POS=None,VEL_AVG=None):
 		''' Building Ensemble Cluster and Calculating Property Statistics '''
 		## Unpack HaloData array 
 		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD = HaloData
@@ -520,6 +519,10 @@ class BinStack:
 		gal_id_count = 0
 
 		## Loop over lines of sight (different clusters)
+		# l : index for line of sight, w.r.t. total lines of sight of run
+		# s : index for each to-be-stacked halo w.r.t. HaloData arrays
+		# p : index for line of sight w.r.t. this los loop
+		p = 0
 		for [l,s] in zip(np.arange(self.line_num*j,self.line_num*(j+1)),self.stack_range[j*self.line_num:(j+1)*self.line_num]):
 
 			# Define index for to-be-stacked halo as cluster index (k) + line of sight index (l)
@@ -529,14 +532,20 @@ class BinStack:
 				pass
 			else:
 				# Line of Sight Calculation for naturally 3D data
-				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
+				if PRO_POS == None:
+					r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
+				else:
+					r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s,project=False,pro_pos=PRO_POS[p])
 
 			# Do Center Analysis if Desired
-			if self.center_guess == 'v':
-				print 'shifting gal velocity'
-				v_avg = self.v_shift(r,v,R_Mags[l],R_crit200[s])	
-				v -= v_avg
-				vel_avg.append(v_avg)
+			if self.cent_offset == 'v':
+				if PRO_POS == None:
+					v_avg = self.v_shift(r,v,R_Mags[l],R_crit200[s])
+					vel_avg.append(v_avg)
+				else:
+					print 'shifting gal velocity:',VEL_AVG[p]
+					v_avg = VEL_AVG[p]	
+					v -= v_avg
 
 			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
 			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
@@ -606,6 +615,9 @@ class BinStack:
 			los_nfwsurf.append(ln_nfwsurf)
 			sample_size.append(samp_size)
 			pro_pos.append(projected_pos)
+		
+			# Add to p
+			p += 1
 
 		# If scale data == True, re-scale by ensemble r200
 		if self.scale_data == True:
@@ -836,11 +848,11 @@ class BinStack:
 		to get average velocity center, and shifts data to that center
 		'''	
 		# Set Hard Constraints
-		cut = np.where((r_init<1)&(v_init<5000)&(v_init>-5000))
+		cut = np.where((r_init<.2)&(v_init<5000)&(v_init>-5000))
 		r,v,rmag= r_init[cut],v_init[cut],rmag_init[cut]
 
 		# Rough sigma clip
-		clip = ~sigma_clip(v,iters=None,sig=3).mask	
+		clip = ~sigma_clip(v,iters=None,sig=2).mask	
 		r_clip,v_clip,rmag_clip = r[clip],v[clip],rmag[clip]
 
 		# Take Ngal Constraints
@@ -854,7 +866,6 @@ class BinStack:
 		
 		# Find Average
 		v_avg = np.mean(v_clip)
-		print 'v_avg =',v_avg
 
 		# Output results
 		return v_avg

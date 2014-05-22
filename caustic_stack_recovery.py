@@ -39,7 +39,7 @@ class Recover(universal):
 		pass
 
 
-	def recover(self,write_loc=write_loc,write_stem=None,raw_data=False,ss=True,mm=False,go_global=True,ens_only=True,data_loc=None,bootstrap=False,avg_meth=None):
+	def recover(self,write_loc=write_loc,write_stem=None,raw_data=False,ss=True,mm=False,go_global=True,ens_only=True,data_loc=None,bootstrap=False,avg_meth=None,cent_offset=None):
 
 		"""
 		This function uploads the pickle files from directory stack_data and configures them into multi dimensional arrays.
@@ -68,6 +68,10 @@ class Recover(universal):
 		BOOTSTRAP_SELECT = []
 		ENS_R200_EST = []
 
+		if cent_offset != None:
+			OFF_ENS_CAUMASS,OFF_ENS_CAUMASS_EST,OFF_ENS_CAUSURF,OFF_ENS_HVD,OFF_ENS_R,OFF_ENS_V = [],[],[],[],[],[]
+			VEL_AVG = []
+
 		# Initialization step 
 		if data_loc==None:	
 			if self.ss:	data_loc = 'old_selfstack_run_table'
@@ -82,6 +86,7 @@ class Recover(universal):
                 # Add varib and run_dict to final_data
                 final_data.update(varib)
                 final_data.update(run_dict)
+		final_data.update({'x_range':stack_data['x_range']})
 
 	        # Add varib to Classes  
 		self.__dict__.update(varib)
@@ -116,7 +121,6 @@ class Recover(universal):
 
 
 		# Append stack_data to major lists
-		
 		self.app('ens_r',stack_data,ENS_R)
 		self.app('ens_v',stack_data,ENS_V)
 		self.app('ens_gmags',stack_data,ENS_GMAGS)
@@ -148,6 +152,15 @@ class Recover(universal):
 		self.app('ens_clus_id',stack_data,ENS_CLUS_ID)
 		self.app('ens_r200_est',stack_data,ENS_R200_EST)	
 
+		if cent_offset != None:
+			self.app('off_ens_caumass',stack_data,OFF_ENS_CAUMASS)
+			self.app('off_ens_caumass_est',stack_data,OFF_ENS_CAUMASS_EST)
+			self.app('off_ens_causurf',stack_data,OFF_ENS_CAUSURF)
+			self.app('off_ens_hvd',stack_data,OFF_ENS_HVD)
+			self.app('off_ens_r',stack_data,OFF_ENS_R)
+			self.app('off_ens_v',stack_data,OFF_ENS_V)
+			self.app('vel_avg',stack_data,VEL_AVG)			
+
 		# Load 3D Data
 		if bootstrap == False:
 			ens_r3d,ens_v3d,ens_clus_index,ens_member = self.get_RV3D(ENS_GP3D,ENS_GV3D,ENS_CLUS_ID,HaloID,R_crit200,HVD,k=0)
@@ -168,7 +181,6 @@ class Recover(universal):
 				
 
 			# Append stack_data to major lists
-			
 			self.app('ens_r',stack_data,ENS_R)
 			self.app('ens_v',stack_data,ENS_V)
 			self.app('ens_gmags',stack_data,ENS_GMAGS)
@@ -199,6 +211,15 @@ class Recover(universal):
 			self.app('los_gal_id',stack_data,LOS_GAL_ID)
 			self.app('ens_clus_id',stack_data,ENS_CLUS_ID)
 			self.app('ens_r200_est',stack_data,ENS_R200_EST)	
+
+			if cent_offset != None:
+				self.app('off_ens_caumass',stack_data,OFF_ENS_CAUMASS)
+				self.app('off_ens_caumass_est',stack_data,OFF_ENS_CAUMASS_EST)
+				self.app('off_ens_causurf',stack_data,OFF_ENS_CAUSURF)
+				self.app('off_ens_hvd',stack_data,OFF_ENS_HVD)
+				self.app('off_ens_r',stack_data,OFF_ENS_R)
+				self.app('off_ens_v',stack_data,OFF_ENS_V)
+				self.app('vel_avg',stack_data,VEL_AVG)
 
 			# Load 3D Data
 			if bootstrap == False:
@@ -242,13 +263,20 @@ class Recover(universal):
 		ENS_R3D = np.array(ENS_R3D)
 		ENS_V3D = np.array(ENS_V3D)
 		ENS_MEM = np.array(ENS_MEM)
-
 		ENS_R200_EST = np.array(ENS_R200_EST)
 		BOOTSTRAP_SELECT = np.array(BOOTSTRAP_SELECT)
+                if cent_offset != None:
+			OFF_ENS_CAUMASS = np.array(OFF_ENS_CAUMASS).ravel()
+			OFF_ENS_CAUMASS_EST = np.array(OFF_ENS_CAUMASS_EST).ravel()
+			OFF_ENS_CAUSURF = np.array(OFF_ENS_CAUSURF)
+			OFF_ENS_HVD = np.array(OFF_ENS_HVD).ravel()
+			OFF_ENS_R = np.array(OFF_ENS_R)
+			OFF_ENS_V = np.array(OFF_ENS_V)
+			VEL_AVG = np.array(VEL_AVG)
 
 		if raw_data == True:
 			# Return to Namespaces depending on go_global
-			names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT','ENS_R200_EST']
+			names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT','ENS_R200_EST','OFF_ENS_CAUMASS','OFF_ENS_CAUMASS_EST','OFF_ENS_CAUSURF','OFF_ENS_HVD','OFF_ENS_R','OFF_ENS_V','VEL_AVG']
 			mydict = ez.create(names,locals())
 
                         # Add to final_data
@@ -281,10 +309,13 @@ class Recover(universal):
 				LOS_MFRAC,los_mbias,los_mscat,LOS_VFRAC,los_vbias,los_vscat = None,None,None,None,None,None
 			else:
 				LOS_MFRAC,los_mbias,los_mscat,LOS_VFRAC,los_vbias,los_vscat = self.stat_calc(LOS_CAUMASS.ravel(),M_crit200[0:self.halo_num],LOS_HVD.ravel(),HVD[0:self.halo_num],ens=False)
+	
+		if cent_offset != None:
+			OFF_MFRAC,off_ens_mbias,off_ens_mscat,OFF_ENS_VFRAC,off_ens_vbias,off_ens_vscat = self.stat_calc(OFF_ENS_CAUMASS,BIN_M200,OFF_ENS_HVD,BIN_HVD,data_set=None)
 
 
 		# Create a dictionary
-		names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ens_mbias','ens_mscat','los_mbias','los_mscat','ens_vbias','ens_vscat','los_vbias','los_vscat','ENS_MFRAC','ENS_VFRAC','LOS_MFRAC','LOS_VFRAC','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT','ENS_R200_EST']
+		names = ['varib','HaloID','Halo_P','Halo_V','ENS_GP3D','ENS_GV3D','LOS_GP3D','LOS_GV3D','M_crit200','R_crit200','Z','SRAD','ESRAD','HVD','x_range','ENS_CAUMASS','ENS_CAUMASS_EST','ENS_CAUSURF','ENS_NFWSURF','LOS_CAUMASS','LOS_CAUMASS_EST','LOS_CAUSURF','LOS_NFWSURF','ENS_R','ENS_V','ENS_GMAGS','ENS_RMAGS','ENS_IMAGS','LOS_R','LOS_V','LOS_GMAGS','LOS_RMAGS','LOS_IMAGS','ENS_HVD','LOS_HVD','SAMS','PRO_POS','ENS_GAL_ID','LOS_GAL_ID','ENS_CLUS_ID','ens_mbias','ens_mscat','los_mbias','los_mscat','ens_vbias','ens_vscat','los_vbias','los_vscat','ENS_MFRAC','ENS_VFRAC','LOS_MFRAC','LOS_VFRAC','ENS_R3D','ENS_V3D','ENS_MEM','BIN_M200','BIN_R200','BIN_HVD','BOOSTRAP_SELECT','ENS_R200_EST','OFF_ENS_CAUMASS','OFF_ENS_CAUMASS_EST','OFF_ENS_CAUSURF','OFF_ENS_HVD','OFF_ENS_R','OFF_ENS_V','OFF_MFRAC','off_ens_mbias','off_ens_mscat','OFF_ENS_VFRAC','off_ens_vbias','off_ens_vscat','VEL_AVG']
 		mydict = ez.create(names,locals())
 
 		# Append to final_data
@@ -432,6 +463,11 @@ class Work(Recover):
 		self.LOS_MSCAT.append(d.los_mscat)
 		self.LOS_VBIAS.append(d.los_vbias)
 		self.LOS_VSCAT.append(d.los_vscat)	
+		if kwargs['cent_offset'] != None:
+			self.OFF_ENS_MBIAS.append(d.off_ens_mbias)
+			self.OFF_ENS_MSCAT.append(d.off_ens_mscat)
+			self.OFF_ENS_VBIAS.append(d.off_ens_vbias)
+			self.OFF_ENS_VSCAT.append(d.off_ens_vscat)
 
 
 	def load_all(self,iter_array=None,tab_shape=None,ens_only=True,kwargs=None,write_stem=None):
@@ -443,7 +479,7 @@ class Work(Recover):
 		# Feed Local Variables
 		self.ens_only = ens_only	
 		if kwargs == None:
-			kwargs = {'write_loc':'mm_m0_run1','raw_data':False,'ss':False,'go_global':False,'ens_only':True,'data_loc':'mass_mix/mm_0.05_run_table1'}
+			kwargs = {'write_loc':'mm_m0_run1','raw_data':False,'ss':False,'go_global':False,'ens_only':True,'data_loc':'mass_mix/mm_0.05_run_table1','cent_offset':None}
 		if write_stem == None:
 			write_stem = 'mm_m0_run'
 	
@@ -460,6 +496,8 @@ class Work(Recover):
 			self.ENS_MBIAS,self.ENS_MSCAT,self.ENS_VBIAS,self.ENS_VSCAT = [],[],[],[]
 			self.LOS_MBIAS,self.LOS_MSCAT,self.LOS_VBIAS,self.LOS_VSCAT = [],[],[],[]
 			self.RUN_NUM,self.GAL_NUM,self.LINE_NUM = [],[],[]
+			if kwargs['cent_offset'] != None:
+				self.OFF_ENS_MBIAS,self.OFF_ENS_MSCAT,self.OFF_ENS_VBIAS,self.OFF_ENS_VSCAT = [],[],[],[]
 
 			# Iterate over runs for ensemble data
 			print '...Loading Data from '+str(len(iter_array))+' runs'
@@ -482,13 +520,16 @@ class Work(Recover):
 			self.LOS_MBIAS,self.LOS_MSCAT,self.LOS_VBIAS,self.LOS_VSCAT = np.array(self.LOS_MBIAS).reshape(tab_shape),np.array(self.LOS_MSCAT).reshape(tab_shape),np.array(self.LOS_VBIAS).reshape(tab_shape),np.array(self.LOS_VSCAT).reshape(tab_shape)
 			self.RUN_NUM,self.GAL_NUM,self.LINE_NUM = np.array(self.RUN_NUM).reshape(tab_shape),np.array(self.GAL_NUM).reshape(tab_shape),np.array(self.LINE_NUM).reshape(tab_shape) 
 
+			if kwargs['cent_offset'] != None:
+				self.OFF_ENS_MBIAS,self.OFF_ENS_MSCAT,self.OFF_ENS_VBIAS,self.OFF_ENS_VSCAT = np.array(self.OFF_ENS_MBIAS).reshape(tab_shape),np.array(self.OFF_ENS_MSCAT).reshape(tab_shape),np.array(self.OFF_ENS_VBIAS).reshape(tab_shape),np.array(self.OFF_ENS_VSCAT).reshape(tab_shape)
+
 			# Other Data Arrays
 			self.RICH_NUM = self.GAL_NUM*self.LINE_NUM
 
 			# Create Dictionary
-			names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM']
+			names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM','OFF_ENS_MBIAS','OFF_ENS_MSCAT','OFF_ENS_VBIAS','OFF_ENS_VSCAT']
 			dictionary = ez.create(names,self.__dict__)
-			
+	
 			return dictionary
 
 
@@ -551,18 +592,18 @@ if work == True:
 	table_num	= str(sys.argv[1])
 	iter_array	= np.arange(1,50)
 	tab_shape	= (7,7)
-	write_stem	= 'mm_m0_run'
-	write_loc	= 'mm_m0_run1'
-	data_loc	= 'mass_mix/mm_0.05_run_table'+str(table_num)
+	write_stem	= 'bs_m0_run'
+	write_loc	= 'bs_m0_run1'
+	data_loc	= 'binstack/voff_run_table'+str(table_num)
 	ss		= False
-	mm		= True
-	
+	mm		= False
+	cent_offset	= 'v'
 
-	kwargs = {'write_loc':write_loc,'raw_data':False,'ss':ss,'mm':mm,'go_global':False,'ens_only':True,'data_loc':data_loc}
+	kwargs = {'write_loc':write_loc,'raw_data':False,'ss':ss,'mm':mm,'go_global':False,'ens_only':True,'data_loc':data_loc,'cent_offset':cent_offset}
 
 	data = W.load_all(kwargs=kwargs,write_stem=write_stem,iter_array=iter_array,tab_shape=tab_shape)
 
-	names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_MSCAT','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM']
+	names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_MSCAT','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM','OFF_ENS_MBIAS','OFF_ENS_MSCAT','OFF_ENS_VBIAS','OFF_ENS_VSCAT']
 
 	dictionary = ez.create(names,data)
 

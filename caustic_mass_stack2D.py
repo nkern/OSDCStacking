@@ -40,9 +40,10 @@ write_data 	= True				# Write Data to Result directories if True
 light_cone	= False				# Input RA|DEC projection data if True, if False inputting x,y,z 3D data
 clean_ens	= False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set	= False				# 100 Halo Set or 2000 Halo Set
-mass_mix	= True				# Incorporate Mass Mixing Models?
-cent_offset	= False				# Peform Halo Center Radius / Velocity Offset Analysis?
+mass_mix	= False				# Incorporate Mass Mixing Models?
 bootstrap	= False				# Perform a bootstrapping technique to estimate error in mass estimation?
+new_halo_cent	= True				# Use Updated Halo Centers instead of BCG Values
+true_mems	= True				# Run with all known members?
 
 ## CONSTANTS ##
 c 		= 2.99792e5			# speed of light in km/s
@@ -78,25 +79,25 @@ if self_stack == True:								# Change Write Directory Depending on Parameters
 else:
 	data_loc = 'binstack/bs_run_table'+str(table_num)
 	write_loc = 'bs_m'+str(method_num)+'_run'+str(cell_num)			# Bin Stack data-write location
-	if center_guess == 'r':
-		data_loc = 'binstack/rguess_run_table'+str(table_num)
-	if center_guess == 'v':
-		data_loc = 'binstack/vguess_run_table'+str(table_num)
+	if cent_offset == 'r':
+		data_loc = 'binstack/roff_run_table'+str(table_num)
+	elif cent_offset == 'v':
+		data_loc = 'binstack/voff_run_table'+str(table_num)
 	stack_range = np.arange(run_num*clus_num*line_num,run_num*clus_num*line_num+clus_num*line_num)
 	if mass_mix == True:							# Change write_loc if mass mixing
 		data_loc = 'mass_mix/mm_'+mass_scat+'_run_table'+str(table_num)
 		write_loc = 'mm_m'+str(method_num)+'_run'+str(cell_num)
-		if center_guess == 'r':
-			data_loc = 'mass_mix/rguess_run_table'+str(table_num)
-		if center_guess == 'v':
-			data_loc = 'mass_mix/vguess_run_table'+str(table_num)
+		if cent_offset == 'r':
+			data_loc = 'mass_mix/roff_run_table'+str(table_num)
+		elif cent_offset == 'v':
+			data_loc = 'mass_mix/voff_run_table'+str(table_num)
 	
 if bootstrap == True:
 	write_loc = 'bo_m'+str(method_num)+'_run'+str(cell_num)
 	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
 
 ## Make dictionary for above constants
-keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','use_flux','write_data','light_cone','run_time','clean_ens','small_set','run_los','bootstrap','run_num','clus_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','center_guess','cent_offset']
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','use_flux','write_data','light_cone','run_time','clean_ens','small_set','run_los','bootstrap','run_num','clus_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems']
 varib = ez.create(keys,locals())
 
 ## INITIALIZATION ##
@@ -187,6 +188,10 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 	# Unpack data
 	ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,ens_r200_est,vel_avg = stack_data
 
+	# Operate on Center Offset Data if Available
+	if cent_offset != None:
+		offset_data = BS.bin_stack_clusters(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j,PRO_POS=pro_pos,VEL_AVG=vel_avg)
+		off_ens_r,off_ens_v,off_ens_gal_id,off_ens_clus_id,off_ens_gmags,off_ens_rmags,off_ens_imags,off_ens_hvd,off_ens_caumass,off_ens_caumass_est,off_ens_causurf,off_ens_nfwsurf,off_los_r,off_los_v,off_los_gal_id,off_los_gmags,off_los_rmags,off_los_imags,off_los_hvd,off_los_caumass,off_los_caumass_est,off_los_causurf,off_los_nfwsurf,off_x_range,off_sample_size,off_pro_pos,off_ens_r200_est,off_vel_avg = offset_data
 
 	# Get 3D data
 	if self_stack == True:
@@ -207,6 +212,11 @@ for j in range(clus_num):	# iterate over # of ensembles to build and solve for
 	else:
 		keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','los_r','los_v','los_gal_id','los_gmags','los_rmags','los_imags','los_hvd','los_caumass','los_caumass_est','los_causurf','los_nfwsurf','x_range','sample_size','pro_pos','ens_gp3d','ens_gv3d','los_gp3d','los_gv3d','BS.bootstrap_select','ens_r200_est','vel_avg']
 	stack_data = ez.create(keys,locals())
+	
+	if cent_offset != None:
+		keys = ['off_ens_r','off_ens_v','off_ens_hvd','off_ens_caumass','off_ens_caumass_est','off_ens_causurf','off_los_r','off_los_v','off_los_hvd','off_los_caumass','off_los_caumass_est','off_los_causurf']
+		off_dict = ez.create(keys,locals())
+		stack_data.update(off_dict)
 
 	# Append to STACK_DATA
 	STACK_DATA.append(stack_data)

@@ -28,7 +28,7 @@ class universal:
 		''' Adding permanent program variables to class namespace'''
 		self.__dict__.update(varib)
 
-	def load_halos(self):
+	def load_halos(self,new_coords='median'):
 		'''This function loads halo data and makes cosmology corrections'''
 		if self.small_set == True:
 			HaloID = np.loadtxt(self.root+'/nkern/Caustic/biglosclusters.csv', delimiter=',', dtype='string', usecols=(0,), unpack=True)
@@ -39,6 +39,16 @@ class universal:
 			M_crit200 *= 1e10
 			HaloID = np.array(HaloID,int)
 			SRAD,ESRAD=np.ones(HaloID.size),np.ones(HaloID.size)
+			if self.new_halo_cent == True:
+				if new_coords == 'mean':
+					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/nkern/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,1,2,3,4,5,6),unpack=True)
+				elif new_coords == 'median':
+					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/nkern/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,7,8,9,10,11,12),unpack=True)
+				else:
+					print 'Old Coordinates Used...'
+				HALOID = np.array(HALOID,int)
+				to_sort = np.array(map(lambda x: np.where(HALOID==x), HaloID)).ravel()
+				HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = HALOID[to_sort],HPX[to_sort],HPY[to_sort],HPZ[to_sort],HVX[to_sort],HVY[to_sort],HVZ[to_sort]
 
 		# Hubble Constant Coefficient
 		R_crit200,M_crit200,HPX,HPY,HPZ = R_crit200,M_crit200,HPX,HPY,HPZ
@@ -127,8 +137,15 @@ class universal:
 		gmags,rmags,imags = np.array(gmags,float),np.array(rmags,float),np.array(imags,float)
 		# remove BCG from sample
 		BCG = np.where((gpx != hpx)&(gpy != hpy)&(gpz != hpz))
+		gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags = gpx[BCG], gpy[BCG], gpz[BCG], gvx[BCG], gvy[BCG], gvz[BCG], gmags[BCG], rmags[BCG], imags[BCG]
 
-		return np.vstack([ gpx[BCG], gpy[BCG], gpz[BCG], gvx[BCG], gvy[BCG], gvz[BCG], gmags[BCG], rmags[BCG], imags[BCG] ])
+		# Cut down to only members if desired
+		if self.true_mems == True:
+			gpr = np.sqrt((gpx-hpx)**2 + (gpy-hpy)**2 + (gpz-hpz)**2 )
+			cut = np.where(gpr < r_crit200)
+			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = gpx[cut],gpy[cut],gpz[cut],gvx[cut],gvy[cut],gvz[cut],gmags[cut],rmags[cut],imags[cut]
+
+		return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 
 
 	def scale_gals(self,r,r_crit200):
@@ -186,10 +203,13 @@ class universal:
 
 
 
-	def line_of_sight(self,gal_p,gal_v,halo_p,halo_v,k):
+	def line_of_sight(self,gal_p,gal_v,halo_p,halo_v,k,project=True,pro_pos=None):
 		'''Line of Sight Calculations to mock projected data, if given 3D data'''
-		# Pick Position
-		new_pos = self.rand_pos(30)
+		if project == True:
+			# Pick Position
+			new_pos = self.rand_pos(30)
+		else:
+			new_pos = pro_pos
 		new_pos += halo_p 
 
 		# New Halo Information
@@ -198,7 +218,6 @@ class universal:
 		halo_vlos = np.dot(halo_pos_unit, halo_v)
 
 		# If Center Offsetting is desired
-		self.cent_offset = False
 		if self.cent_offset == True:
 			halo_dist,halo_pos_unit,halo_vlos,halo_p,halo_v,new_pos = self.center_offset(halo_dist,halo_pos_unit,halo_vlos,halo_p,halo_v,new_pos)
 
@@ -236,6 +255,7 @@ class universal:
 #		gal_rmag_new = gal_abs_rmag# + 5*np.log10(gal_dist*1e6/10.0)
 
 		return r, v, new_pos
+
 
 	def limit_gals(self,r,v,en_gal_id,en_clus_id,ln_gal_id,gmags,rmags,imags,r200,hvd):
 		''' Sort data by magnitude, and elimite values outside phase space limits '''
@@ -482,11 +502,15 @@ class universal:
 		print "self_stack		=",varib['self_stack']
 		print "write_data		=",varib['write_data']
 		print "run_los			=",varib['run_los']
+		print "new_halo_cent		=",varib['new_halo_cent']
+		print "true_mems		=",varib['true_mems']
 		print "mass_mix		=",varib['mass_mix']
 		if varib['mass_mix'] == True:
 			print "mass_scat		=",varib['mass_scat']
 		print "bootstrap		=",varib['bootstrap']
-
+		if varib['self_stack'] == False:
+			print "avg_meth		=",varib['avg_meth']
+		print "cent_offset		=",varib['cent_offset']	
 		return	
 
 	def print_separation(self,text,type=1):
