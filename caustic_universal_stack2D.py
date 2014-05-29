@@ -11,12 +11,11 @@ universal:
 import CausticMass as cm
 import numpy as np
 import astropy.io.fits as fits
-import random
 from scipy import weave
 from scipy.weave import converters
 import cosmolopy.distance as cd
 import time
-from numpy import random
+import numpy.random as npr
 from scipy.linalg import norm
 import cPickle as pkl
 
@@ -31,19 +30,19 @@ class universal:
 	def load_halos(self,new_coords='median'):
 		'''This function loads halo data and makes cosmology corrections'''
 		if self.small_set == True:
-			HaloID = np.loadtxt(self.root+'/nkern/Caustic/biglosclusters.csv', delimiter=',', dtype='string', usecols=(0,), unpack=True)
-			HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/nkern/Caustic/biglosclusters.csv', delimiter=',', dtype='float', usecols=(9,10,11,12,13,14), unpack=True)
-			SRAD,ESRAD,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/nkern/Caustic/Millbig_concentrations.phys_phys.csv', delimiter=',', dtype='float', usecols=(1,2,5,7,9,12), unpack=True)
+			HaloID = np.loadtxt(self.root+'/Caustic/biglosclusters.csv', delimiter=',', dtype='string', usecols=(0,), unpack=True)
+			HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/Caustic/biglosclusters.csv', delimiter=',', dtype='float', usecols=(9,10,11,12,13,14), unpack=True)
+			SRAD,ESRAD,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/Caustic/Millbig_concentrations.phys_phys.csv', delimiter=',', dtype='float', usecols=(1,2,5,7,9,12), unpack=True)
 		else:
-			HaloID,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/nkern/Millennium/Large_Halo_Set/halos.csv',usecols=(0,8,9,10,11,12,13,16,5,7,4),delimiter=',',unpack=True)
+			HaloID,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/Millennium/Large_Halo_Set/halos.csv',usecols=(0,8,9,10,11,12,13,16,5,7,4),delimiter=',',unpack=True)
 			M_crit200 *= 1e10
 			HaloID = np.array(HaloID,int)
 			SRAD,ESRAD=np.ones(HaloID.size),np.ones(HaloID.size)
 			if self.new_halo_cent == True:
 				if new_coords == 'mean':
-					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/nkern/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,1,2,3,4,5,6),unpack=True)
+					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,1,2,3,4,5,6),unpack=True)
 				elif new_coords == 'median':
-					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/nkern/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,7,8,9,10,11,12),unpack=True)
+					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,7,8,9,10,11,12),unpack=True)
 				else:
 					print 'Old Coordinates Used...'
 				HALOID = np.array(HALOID,int)
@@ -126,7 +125,7 @@ class universal:
 			gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(13),data.field(17),data.field(18),data.field(19),data.field(20),data.field(21),data.field(22),data.field(62),data.field(63),data.field(64)
 		else:
 			# 2,000 Halo Sample
-			data = fits.getdata(self.root+'/nkern/Millennium/Large_Halo_Set/Halo_'+str(haloid)+'.Guo2010.fits')
+			data = fits.getdata(self.root+'/Millennium/Large_Halo_Set/Halo_'+str(haloid)+'.Guo2010.fits')
 
 			gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(3),data.field(6),data.field(7),data.field(8),data.field(9),data.field(10),data.field(11),data.field(14),data.field(15),data.field(16)
 
@@ -155,8 +154,8 @@ class universal:
 
 	def rand_pos(self,distance):
 	        '''Picks a random position for the observer a given distance away from the center'''
-		theta = random.normal(np.pi/2,np.pi/4)
-		phi = random.uniform(0,2*np.pi)
+		theta = npr.normal(np.pi/2,np.pi/4)
+		phi = npr.uniform(0,2*np.pi)
 		x = np.sin(theta)*np.cos(phi)
 		y = np.sin(theta)*np.sin(phi)
 		z = np.cos(theta)
@@ -170,7 +169,7 @@ class universal:
 		major_axis = True		# Project along major or minor axes?
 
 		# Load Ellipticity Data for 100 Halos
-		pkl_file = open(self.root+'/nkern/Stacking/Halo_Shape/100_halo_ellipticities.pkl','rb')
+		pkl_file = open(self.root+'/Stacking/Halo_Shape/100_halo_ellipticities.pkl','rb')
 		input = pkl.Unpickler(pkl_file)
 		d = input.load()
 		eig_vec = d['eig_vec']
@@ -189,11 +188,11 @@ class universal:
 			theta = np.arccos(eig_vec[2]/r)
 			phi = np.arctan(eig_vec[1]/eig_vec[0])
 
-	#	if random.random()<.5:
+	#	if npr.random()<.5:
 	#		eig_vec *= -1.
 
-		theta = random.normal(theta,.075)
-		phi = random.normal(phi,.075)
+		theta = npr.normal(theta,.075)
+		phi = npr.normal(phi,.075)
 		x = np.sin(theta)*np.cos(phi)
 		y = np.sin(theta)*np.sin(phi)
 		z = np.cos(theta)	
@@ -316,7 +315,7 @@ class universal:
 		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 		
 		# Create lognormal distribution about 1 with width mass_scat, length HaloID.size
-		mass_mix = random.lognormal(0,mass_scat,len(HaloID))
+		mass_mix = npr.lognormal(0,mass_scat,len(HaloID))
 
 		# Apply Mass Scatter
 		M_crit200 *= mass_mix
@@ -356,7 +355,7 @@ class universal:
 		M_crit200,R_crit200,Z,SRAD,ESRAD,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 
 		# Create Gaussian distribution about 
-		center_guess = random.normal(1,center_scat,len(HaloID))
+		center_guess = npr.normal(1,center_scat,len(HaloID))
 
 		# Apply scatter
 			
@@ -409,7 +408,7 @@ class universal:
 
 		return gpx3d,gpy3d,gpz3d,gvx3d,gvy3d,gvz3d
 
-	def get_3d(self,Gal_P,Gal_V,ens_gal_id,los_gal_id,stack_range,clus_num,self_stack,j):
+	def get_3d(self,Gal_P,Gal_V,ens_gal_id,los_gal_id,stack_range,ens_num,self_stack,j):
 		'''
 		This function recovers the 3D positions and velocities of the galaxies in the ensemble and los phase space.
 		'''
@@ -472,10 +471,10 @@ class universal:
 		normal_vec /= np.linalg.norm(normal_vec)
 
 		# Get Radial Offset in Mpc
-		r_offset = random.normal(0,r_scat,1)[0]
+		r_offset = npr.normal(0,r_scat,1)[0]
 
 		# Get Veloctiy Offset in km/s
-		v_offset = random.normal(0,v_scat,1)[0]
+		v_offset = npr.normal(0,v_scat,1)[0]
 
 		# Perform Center Offset
 		halo_p += normal_vec*r_offset
@@ -490,7 +489,7 @@ class universal:
 	def print_varibs(self,varib):
 		print "Start Time		=",time.asctime()
 		print "run_num			=",varib['run_num']
-		print "clus_num		=",varib['clus_num']
+		print "ens_num		=",varib['ens_num']
 		print "gal_num			=",varib['gal_num']
 		print "line_num		=",varib['line_num']
 		print "halo_num		=",varib['halo_num']

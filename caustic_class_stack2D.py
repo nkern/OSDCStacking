@@ -60,7 +60,7 @@ class Stack:
 			text = '## Working On Cluster #'+str(k)+'\n## Line of Sight #'+str(l)+''
 		self.U.print_separation(text,type=2)
 
-		print 'First Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
+		#print 'First Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
 		richness = len( np.where(r<r_crit200)[0])
 		print 'Richness Within R200 =',richness
 		print 'Calculated HVD =',np.floor(derived_hvd)
@@ -81,11 +81,11 @@ class Stack:
  		self.C.img_grad_tot = self.C.img_grad/np.max(np.abs(self.C.img_grad))
  		self.C.img_inf_tot = self.C.img_inf/np.max(np.abs(self.C.img_inf))
 	
-		print 'Second Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
+		#print 'Second Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
 		## Define Beta Profile
 		beta_profile = False		# beta profile as a funct of radius?
 		if beta_profile == True:
-			xbeta,abeta = np.loadtxt(''+str(root)+'/nkern/Caustic/average_betaprofile.tab',dtype='float',usecols=(0,1),unpack=True)
+			xbeta,abeta = np.loadtxt(''+str(root)+'/Caustic/average_betaprofile.tab',dtype='float',usecols=(0,1),unpack=True)
 			fit = np.polyfit((xbeta*r_crit200)[xbeta<4],abeta[xbeta<4],6)
 			self.beta = fit[0]*self.C.x_range**6+fit[1]*self.C.x_range**5+fit[2]*self.C.x_range**4+fit[3]*self.C.x_range**3+fit[4]*self.C.x_range**2+fit[5]*self.C.x_range+fit[6]	
 		else:				# constant beta w/ radius
@@ -97,11 +97,11 @@ class Stack:
 		else:
 			self.CS = self.CausticSurface(np.vstack([rvalues,vvalues]).T,self.C.x_range,self.C.y_range,self.C.img_tot,r200=r_crit200,halo_vdisp=derived_hvd,beta=self.beta)
 
-		print 'Third Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
+		#print 'Third Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
 
 		## Mass Calculation, leave clus_z blank for now
 		self.MC = self.MassCalc(self.C.x_range,self.CS.Ar_finalD,derived_hvd,0,r200=r_crit200,beta=self.beta,fbr=self.fbeta,H0=self.H0)
-		print 'Fourth Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
+		#print 'Fourth Time Checkpoint:', (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19]))-(float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
 		
 		return self.MC.M200,self.MC.M200_est,self.CS.Ar_finalD,self.CS.vesc_fit	
 
@@ -357,12 +357,8 @@ class SelfStack:
 
 		## Loop over lines of sight
 		for l in range(self.line_num):
-			if self.light_cone == True:
-				# Configure RA, DEC and Z into cluster-centric radius and velocity
-				pass
-			else:
-				# Line of Sight Calculation for naturally 3D data
-				r, v, projected_pos = self.U.line_of_sight(Gal_P[j],Gal_V[j],Halo_P[k],Halo_V[k],k)
+			# Line of Sight Calculation for naturally 3D data
+			r, v, projected_pos = self.U.line_of_sight(Gal_P[j],Gal_V[j],Halo_P[k],Halo_V[k],k)
 
 			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
 			en_gal_id = np.arange(len(r))
@@ -527,15 +523,11 @@ class BinStack:
 
 			# Define index for to-be-stacked halo as cluster index (k) + line of sight index (l)
 
-			if self.light_cone == True:
-				# Configure RA, DEC and Z into cluster-centric radius and velocity
-				pass
+			# Line of Sight Calculation for naturally 3D data
+			if PRO_POS == None:
+				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
 			else:
-				# Line of Sight Calculation for naturally 3D data
-				if PRO_POS == None:
-					r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
-				else:
-					r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s,project=False,pro_pos=PRO_POS[p])
+				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s,project=False,pro_pos=PRO_POS[p])
 
 			# Do Center Analysis if Desired
 			if self.cent_offset == 'v':
@@ -705,12 +697,8 @@ class BinStack:
 
 			# Define index for to-be-stacked halo as cluster index (k) + line of sight index (l)
 
-			if self.light_cone == True:
-				# Configure RA, DEC and Z into cluster-centric radius and velocity
-				pass
-			else:
-				# Line of Sight Calculation for naturally 3D data
-				r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
+			# Line of Sight Calculation for naturally 3D data
+			r, v, projected_pos = self.U.line_of_sight(Gal_P[l],Gal_V[l],Halo_P[s],Halo_V[s],s)
 
 			# Create Ensemble and LOS Galaxy ID Array for 3D extraction later on
 			en_gal_id = np.arange( gal_id_count, len(r)+gal_id_count )
