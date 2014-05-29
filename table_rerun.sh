@@ -7,22 +7,25 @@
 
 ## Initialize Configuration Arrays and Other Constants
 self_stack=False                                                # Self Stacking or Bin Stacking?
-mass_mix=True                                                  # If Bin Stacking, Mass Mixing or not?
-center_guess=None						# Vary halo center? 'r', 'v', or None
+mass_mix=False                                                  # If Bin Stacking, Mass Mixing or not?
 
 cell_num=($(seq 1 49))						# Number of Cells
 line_num=(2 5 10 15 25 50 100)					# Line of Sight Number 
 gal_num=(5 10 15 25 50 100 150)					# Ngal number
-clus_num=(75 30 15 10 6 3 1)					# Number of Ens Clusters done per instance
-job_num=(14 14 14 14 14 14 21)					# Number of Jobs Submitted
-halo_num=2100							# Number of Halos in Sample
+halo_num=2100                                                   # Number of Halos in Sample
 method_num=0							# Ensemble Build Method
-table_num=2							# Version of entire run table
-mass_scat="'0.05'"							# If mass mixing, induced fractional scatter
-write_stem="mm_m0_run"						# Stem of write_loc directory
-data_loc="mass_mix/mm_0.05_run_table$table_num"			# Highest Directory for Data
+table_num=1							# Version of entire run table
+mass_scat=None							# If mass mixing, induced fractional scatter
+cent_offset=None						# Either 'r', 'v', 'full', or None
+center_scat=None						# If guessing center, fractional induced scatter	
+write_stem="bs_m0_run"						# Stem of write_loc directory
+avg_meth="'median'"						# If bin stacking, method of avg bin props
+data_loc="binstack/bs_run_table$table_num"			# Highest Directory for Data
 base_dir="/glusterfs/users/caustics1/nkern/OSDCStacking"	# Base Directory
-job_name="MASS-MIX"                                            # PBS Job Name Stem
+job_name="BIN-STACK"                                            # PBS Job Name Stem
+clus_num=(75 30 15 10 6 3 1)                                    # Number of Ens Clusters done per instance
+job_num=(14 14 14 14 14 14 21)                                  # Number of Jobs Submitted
+
 
 ## Go To Stacking Directory
 cd $base_dir 
