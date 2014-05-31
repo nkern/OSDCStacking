@@ -6,29 +6,42 @@
 ######################
 
 ## Initialize Configuration Arrays and Other Constants
-self_stack=False                                                # Self Stacking or Bin Stacking?
-mass_mix=False                                                  # If Bin Stacking, Mass Mixing or not?
+### FLAGS ###
+self_stack=False				# Run self-stack or bin-stack
+scale_data=True					# Scale data by r200 if True
+write_data=True					# Write Data to Result directories if True
+clean_ens=False					# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
+small_set=False					# 100 Halo Set or 2000 Halo Set
+mass_mix=False					# Incorporate Mass Mixing Models?
+bootstrap=False					# Perform a bootstrapping technique to estimate error in mass estimation?
+new_halo_cent=False				# Use Updated Halo Centers instead of BCG Values
+true_mems=False					# Run with only gals within r200?
+run_los=False					# Run line of sight mass estimation or not
+cent_offset=None				# Either 'r', 'v', 'full', or None.
 
-cell_num=($(seq 1 49))						# Number of Cells
-line_num=(2 5 10 15 25 50 100)					# Line of Sight Number 
-gal_num=(5 10 15 25 50 100 150)					# Ngal number
-halo_num=2100                                                   # Number of Halos in Sample
-method_num=0							# Ensemble Build Method
-table_num=1							# Version of entire run table
-mass_scat=None							# If mass mixing, induced fractional scatter
-cent_offset=None						# Either 'r', 'v', 'full', or None
-center_scat=None						# If guessing center, fractional induced scatter	
-write_stem="bs_m0_run"						# Stem of write_loc directory
-avg_meth="'median'"						# If bin stacking, method of avg bin props
-data_loc="binstack/bs_run_table$table_num"			# Highest Directory for Data
-base_dir="/glusterfs/users/caustics1/nkern/OSDCStacking"	# Base Directory
-job_name="BIN-STACK"                                            # PBS Job Name Stem
-clus_num=(75 30 15 10 6 3 1)                                    # Number of Ens Clusters done per instance
-job_num=(14 14 14 14 14 14 21)                                  # Number of Jobs Submitted
+### CONSTANTS ###
+# Run Dependent
+gal_num=(5 10 15 25 50 100 150)			# Ngal number
+line_num=(2 5 10 15 25 50 100)			# Line of Sight Number 
+method_num=0					# Ensemble Build Method Number
+cell_num=($(seq 1 49))				# Number of Cells
+table_num=1					# Table Re-Run Version  
+data_loc="binstack/bs_run_table$table_num"	# Highest Directory for Data
+base_dir="/glusterfs/users/caustics1/nkern"	# Base Directory
+job_name="BIN-STACK"				# PBS Job Name Stem
+write_stem="bs_m0_run"				# Stem of write_loc directory
+job_num=(14 14 14 14 14 14 21)			# Number of Jobs Submitted
+
+# Other Techniques
+mass_scat=None					# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
+center_scat=None				# If guessing halo center, fractional induced scatter into known center
+avg_meth="'median'"				# If bin stacking, by which method do you average bin properties? (ex. median, mean)
+bootstrap_num=None				# Highest directory marker for bootstrap data, ex. bootstrap1
+bootstrap_rep=None				# Bootstrap repetition directory marker, ex. bootstrap1/rep1
 
 
-## Go To Stacking Directory
-cd $base_dir 
+## Go To Stacking Directory ##
+cd $base_dir/OSDCStacking
 
 ## Check Directory ##
 echo "Loaded Directory is: $data_loc"
@@ -107,7 +120,7 @@ do
 done
 
 ## Go to Stacking Directory
-cd $base_dir
+cd $base_dir/OSDCStacking
 
 m=0
 for k in ${DIRS[*]}
@@ -118,7 +131,7 @@ do
 	echo '----------------------------------------------------------'
 	echo -e "cell_num=${cell_num[$k]}\tgal_num=${gal_num[$k]}\tline_num=${line_num[$k]}"
 	# Submit Job Array To PBS by feeding "table_rerun_pbs.sh" job parameters
-	# $1 : clus_num			(first caustic_mass_stack2D.py positional parameter)
+	# $1 : ens_num			(first caustic_mass_stack2D.py positional parameter)
 	# $2 : gal_num			(second positional parameter)
 	# $3 : line_num			(third positional parameter)
 	# $4 : method_num		(fourth positional parameter)
@@ -128,20 +141,17 @@ do
 	# $8 : write_loc		(2nd level directory to write .pkl files in)
 
 	# Define Constants
-	let "clus_num=$halo_num/(${job_array[$k]}+1)/${line_num[$k]}"
+	let "ens_num=$halo_num/(${job_array[$k]}+1)/${line_num[$k]}"
 
 	# Define constants to be replaced in pbs script
 	_run_num="$run_num"
-	_clus_num="$clus_num"
 	_gal_num="${gal_num[$k]}"
 	_line_num="${line_num[$k]}"
-	_method_num="$method_num"
 	_cell_num="${cell_num[$k]}"
-	_data_loc="$data_loc"
-	_write_loc="$write_stem${cell_num[$k]}"
+	write_loc="$write_stem${cell_num[$k]}"
 
 	# Create script_rerun.sh file
-	sed -e "s:@@job_name@@:$job_name:g;s:@@write_loc@@:$_write_loc:g;s:@@data_loc@@:$_data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $_data_loc/$_write_loc/script_rerun.sh
+	sed -e "s:@@job_name@@:$job_name:g;s:@@write_loc@@:$write_loc:g;s:@@data_loc@@:$data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $_data_loc/$_write_loc/script_rerun.sh
 
 	# Submit Script to PBS via qsub
 	qsub $_data_loc/$_write_loc/script_rerun.sh 
