@@ -17,6 +17,7 @@ class Millennium(object):
 
 	def __init__(self,varib):
 		self.__dict__.update(varib)
+		self.U = Universal(varib)
 
 
 	def load_halos(self,new_coords='median'):
@@ -79,35 +80,23 @@ class Millennium(object):
 	def configure_galaxies(self,HaloID,HaloData):
 		''' Loads galaxy data from halo list, and converts to physical coordinates and corrects cosmological factors '''
 		# Unpack Array HaloData into local namespace for easier use and clarity
-		M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData	
+		M_crit200,R_crit200,HVD,Z,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 
-		G_Mags = []
-		R_Mags = []
-		I_Mags = []
-		Gal_V = []
-		Gal_P = []
-		for k in self.stack_range:
-			galdata = self.load_galaxies(HaloID[k],HaloData.T[k],R_crit200[k])
-			# unpack array galdata into namespace
-			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata	
-			gal_p	= np.array([gpx,gpy,gpz],float)
-			gal_v	= np.array([gvx,gvy,gvz],float)
-		
-			G_Mags.append(gmags)
-			R_Mags.append(rmags)	
-			I_Mags.append(imags)
-			Gal_P.append(gal_p)
-			Gal_V.append(gal_v)			
+		galdata = self.load_galaxies(HaloID,HaloData,R_crit200)
 
-		Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
-		
-		return Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,HaloData[0:4]
+		# unpack array galdata into namespace
+		gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata	
+		gal_p	= np.array([gpx,gpy,gpz],float)
+		gal_v	= np.array([gvx,gvy,gvz],float)
+	
+		return gal_p,gal_v,gmags,rmags,imags
 
 
 	def load_galaxies(self,haloid,halodata,r_crit200):
 		''' Loads haloid galaxies from a local directory '''
 		# Unpack array halodata into local namespace
-		m_crit200,r_crit200,z,hvd,hpx,hpy,hpz,hvx,hvy,hvz = halodata
+		m_crit200,r_crit200,hvd,z,hpx,hpy,hpz,hvx,hvy,hvz = halodata
+
 		# load galaxy data
 		if self.small_set == True:
 			# 100 Halo Sample	
@@ -138,6 +127,27 @@ class Millennium(object):
 
 		return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 
+
+	def load_project_append(self,HaloID,M200,R200,HVD,Z,Halo_P,Halo_V,PS):
+		"""
+		This function loads galaxy data then projects it, discarding the galaxy data after using it to save memory
+		"""
+
+		# Load Galaxies
+		Gal_P,Gal_V,G_Mags,R_Mags,I_Mags = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+
+		# Do Projection
+		r, v, pro_pos = self.U.line_of_sight(Gal_P,Gal_V,Halo_P,Halo_V,project=False)
+
+		r = np.array(r)
+		v = np.array(v)
+		pro_pos = np.array(pro_pos)
+		G_Mags = np.array(G_Mags)
+		R_Mags = np.array(R_Mags)
+		I_Mags = np.array(I_Mags)
+
+		# Append to PS
+		PS.append( {'Rdata':r,'Vdata':v,'pro_pos':pro_pos,'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
 
 
 

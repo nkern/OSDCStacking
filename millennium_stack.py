@@ -49,7 +49,7 @@ if bootstrap == True:
 	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
 
 ## Make dictionary for loaded constants, doesn't matter if some don't exist
-keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','clean_ens','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems']
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_clean','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror']
 varib = ez.create(keys,locals())
 
 ## INITIALIZATION ##
@@ -72,21 +72,8 @@ HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
-
-## Load Galaxy Data
-U.print_separation('# ...Loading Galaxies',type=2)
-Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,HaloData = M.configure_galaxies(HaloID,HaloData)
-M_crit200,R_crit200,Z,HVD = HaloData
-
-# Get Gal_P in physical coordinates
-Gal_P2 = []
-if self_stack == True:
-	for [i,k] in zip(np.arange(ens_num),stack_range):
-		Gal_P2.append((Gal_P[i].T-Halo_P[k]).T)
-else:
-	for [i,l] in zip(np.arange(ens_num*line_num),stack_range):
-		Gal_P2.append((Gal_P[i].T-Halo_P[l]).T)
-
+HaloData = M_crit200,R_crit200,HVD
+Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
 
 # If Bin Stacking:
 #	- Create Ensemble R200 and HVD arrays
@@ -94,8 +81,8 @@ else:
 #	- Create any other arrays needed
 if self_stack == False:
 	U.print_separation("Average Method for Construction of Bin Properties is "+avg_meth,type=2)
-	BinData = U.Bin_Calc(HaloData,varib,avg_meth=avg_meth)
-	BIN_M200,BIN_R200,BIN_HVD = BinData
+	BinM200,BinR200,BinHVD = U.Bin_Calc(M_crit200,R_crit200,HVD)
+	BinData = BinM200,BinR200,BinHVD
 
 # Initialize Multi-Ensemble Array to hold resultant data
 STACK_DATA = []
@@ -105,8 +92,10 @@ U.print_separation('# ...Starting Ensemble Loop',type=2)
 #  k: index for each final ensemble, w.r.t. total number of final ensembles
 #  l: index for line of sight, w.r.t. total lines of sight of run
 
-# Define Container to Hold Phase Space Data 
 for j in range(ens_num):
+
+	# Update S.j
+	S.j = j
 
 	# Total Halo Index
 	k = run_num*ens_num + j
@@ -117,71 +106,21 @@ for j in range(ens_num):
 	# Iterate through lines of sight
 	ens_gal_count = 0
 	for l in range(line_num):
+		print '...Loading galaxy data and projecting line of sight #'+str(l)
+
+		# Load galaxy data, project it, then append to PS
 		if self_stack == True:
-			# Do Projection
-			r, v, projected_pos = U.line_of_sight(Gal_P[j],Gal_V[j],Halo_P[stack_range][j],Halo_V[stack_range][j],project=False)	
-
-			#  
-
+			M.load_project_append(HaloID[stack_range][j],M_crit200[stack_range][j],R_crit200[stack_range][j],HVD[stack_range][j],Z[stack_range][j],Halo_P[stack_range][j],Halo_V[stack_range][j],PS)
 
 		else:
-			# Do Projection
+			M.load_project_append(HaloID[stack_range][j*line_num:(j+1)*line_num][l],M_crit200[stack_range][j*line_num:(j+1)*line_num][l],R_crit200[stack_range][j*line_num:(j+1)*line_num][l],HVD[stack_range][j*line_num:(j+1)*line_num][l],Z[stack_range][j*line_num:(j+1)*line_num][l],Halo_P[stack_range][j*line_num:(j+1)*line_num][l],Halo_V[stack_range][j*line_num:(j+1)*line_num][l],PS)
 
+
+	PS.to_array(['Rdata','Vdata','HaloID','M200','R200','HVD','G_mags','R_Mags','I_Mags'])
 
 	# Build Ensemble and Run Caustic Technique
-	stack_data = S.caustic_stack()
+	stack_data = S.caustic_stack(PS.Rdata,PS.Vdata,PS.HaloID,np.vstack([PS.M200,PS.R200,PS.HVD]),line_num,feed_mags=True,G_Mags=PS.G_Mags,R_Mags=PS.R_Mags,I_Mags=PS.I_Mags)
 
-
-
-
-
-
-
-
-
-	if self_stack:
-		if bootstrap == True:
-			stack_data = SS.self_stack_bootstrap(HaloID,HaloData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
-		else:
-			stack_data = SS.self_stack_clusters(HaloID,HaloData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
-	else:
-		if bootstrap == True:
-			stack_data = BS.bin_stack_bootstrap(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
-		else:
-			stack_data = BS.bin_stack_clusters(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j)
-
-	# Unpack data
-	ens_r,ens_v,ens_gal_id,ens_clus_id,ens_gmags,ens_rmags,ens_imags,ens_hvd,ens_caumass,ens_caumass_est,ens_causurf,ens_nfwsurf,los_r,los_v,los_gal_id,los_gmags,los_rmags,los_imags,los_hvd,los_caumass,los_caumass_est,los_causurf,los_nfwsurf,x_range,sample_size,pro_pos,ens_r200_est,vel_avg = stack_data
-
-	# Operate on Center Offset Data if Available
-	if cent_offset != None:
-		offset_data = BS.bin_stack_clusters(HaloID,HaloData,BinData,Halo_P,Halo_V,Gal_P,Gal_V,G_Mags,R_Mags,I_Mags,k,j,PRO_POS=pro_pos,VEL_AVG=vel_avg)
-		off_ens_r,off_ens_v,off_ens_gal_id,off_ens_clus_id,off_ens_gmags,off_ens_rmags,off_ens_imags,off_ens_hvd,off_ens_caumass,off_ens_caumass_est,off_ens_causurf,off_ens_nfwsurf,off_los_r,off_los_v,off_los_gal_id,off_los_gmags,off_los_rmags,off_los_imags,off_los_hvd,off_los_caumass,off_los_caumass_est,off_los_causurf,off_los_nfwsurf,off_x_range,off_sample_size,off_pro_pos,off_ens_r200_est,off_vel_avg = offset_data
-
-	# Get 3D data
-	if self_stack == True:
-		if bootstrap == True:
-			pass # Don't yet know how to do this for bootstrap
-		else:	
-			ens_gp3d,ens_gv3d,los_gp3d,los_gv3d = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,ens_num,self_stack,j)	
-	else:
-		if bootstrap == True:
-			pass # Don't yet know how to do this for bootstrap
-		else:
-			ens_gp3d,ens_gv3d,los_gp3d,los_gv3d = U.get_3d(np.array(Gal_P2),np.array(Gal_V),ens_gal_id,los_gal_id,stack_range,ens_num,self_stack,j)
-
-	# Combine into stack_data
-	if run_los == False:
-                keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','x_range','sample_size','pro_pos','ens_gp3d','ens_gv3d','BS.bootstrap_select','ens_r200_est','vel_avg']
-	
-	else:
-		keys = ['ens_r','ens_v','ens_gal_id','ens_clus_id','ens_gmags','ens_rmags','ens_imags','ens_hvd','ens_caumass','ens_caumass_est','ens_causurf','ens_nfwsurf','los_r','los_v','los_gal_id','los_gmags','los_rmags','los_imags','los_hvd','los_caumass','los_caumass_est','los_causurf','los_nfwsurf','x_range','sample_size','pro_pos','ens_gp3d','ens_gv3d','los_gp3d','los_gv3d','BS.bootstrap_select','ens_r200_est','vel_avg']
-	stack_data = ez.create(keys,locals())
-	
-	if cent_offset != None:
-		keys = ['off_ens_r','off_ens_v','off_ens_hvd','off_ens_caumass','off_ens_caumass_est','off_ens_causurf','off_los_r','off_los_v','off_los_hvd','off_los_caumass','off_los_caumass_est','off_los_causurf']
-		off_dict = ez.create(keys,locals())
-		stack_data.update(off_dict)
 
 	# Append to STACK_DATA
 	STACK_DATA.append(stack_data)
@@ -217,6 +156,6 @@ if duration < 60:
 	time.sleep(60-duration)
 	
 
-U.print_separation('## Finished caustic_mass_stack2D.py'+'\n'+'Start:'+'\t'+run_time+'\n'+'End:'+'\t'+time.asctime(),type=1)
+U.print_separation('## Finished millennium_stack.py'+'\n'+'Start:'+'\t'+run_time+'\n'+'End:'+'\t'+time.asctime(),type=1)
 
 
