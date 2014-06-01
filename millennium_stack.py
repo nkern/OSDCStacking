@@ -75,15 +75,6 @@ M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 HaloData = M_crit200,R_crit200,HVD
 Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
 
-# If Bin Stacking:
-#	- Create Ensemble R200 and HVD arrays
-#	- Change order of halos to bin upon
-#	- Create any other arrays needed
-if self_stack == False:
-	U.print_separation("Average Method for Construction of Bin Properties is "+avg_meth,type=2)
-	BinM200,BinR200,BinHVD = U.Bin_Calc(M_crit200,R_crit200,HVD)
-	BinData = BinM200,BinR200,BinHVD
-
 # Initialize Multi-Ensemble Array to hold resultant data
 STACK_DATA = []
 
