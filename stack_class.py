@@ -147,7 +147,7 @@ class Millennium(object):
 		I_Mags = np.array(I_Mags)
 
 		# Append to PS
-		PS.append( {'Rdata':r,'Vdata':v,'pro_pos':pro_pos,'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
+		PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
 
 
 

@@ -95,6 +95,7 @@ for j in range(ens_num):
 	PS = Data()
 
 	# Iterate through lines of sight
+	U.print_separation('## Working on Ensemble '+str(j),type=1)
 	ens_gal_count = 0
 	for l in range(line_num):
 		print '...Loading galaxy data and projecting line of sight #'+str(l)
@@ -112,6 +113,9 @@ for j in range(ens_num):
 	# Build Ensemble and Run Caustic Technique
 	stack_data = S.caustic_stack(PS.Rdata,PS.Vdata,PS.HaloID,np.vstack([PS.M200,PS.R200,PS.HVD]),line_num,feed_mags=True,G_Mags=PS.G_Mags,R_Mags=PS.R_Mags,I_Mags=PS.I_Mags)
 
+	# Append other Arrays
+	extra = {'pro_pos':PS.pro_pos}
+	stack_data.update(extra)
 
 	# Append to STACK_DATA
 	STACK_DATA.append(stack_data)
@@ -119,10 +123,6 @@ for j in range(ens_num):
 
 # Finished Loop
 U.print_separation('#...Finished Ensemble Loop',type=2)
-
-# Create run_dict
-keys = ['HaloID','HaloData','HaloID_init','HaloData_init','mass_mix_match','M_crit200_match']
-run_dict = ez.create(keys,locals())
 
 ### Save Data into .pkl Files ###
 if write_data == True:
@@ -139,7 +139,6 @@ if write_data == True:
 		pkl_file.close()
 
 	U.print_separation('#...Finished Data Write',type=2)
-
 
 ## Wait until at least 60 seconds is up
 duration = (float(time.asctime()[11:13])*3600+float(time.asctime()[14:16])*60+float(time.asctime()[17:19])) - (float(run_time[11:13])*3600+float(run_time[14:16])*60+float(run_time[17:19]))
