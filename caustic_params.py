@@ -23,7 +23,7 @@ cent_offset     = None                          # Either 'r', 'v', 'full', or No
 # Run Dependent
 ens_num         = 5                             # Number of Ensembles to build and solve for IN THIS RUN
 gal_num         = 200                           # Number of galaxies taken per line of sight
-line_num        = 15                           # Number of lines of sight to stack over
+line_num        = 25                           # Number of lines of sight to stack over
 method_num      = 0                             # Ensemble Build Method Number
 cell_num        = 0                             # Cell Number ID corresponding to given gal_num & line_num geometry in a Run Table
 table_num       = 1                             # Table Re-Run Version  

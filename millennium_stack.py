@@ -125,6 +125,11 @@ for j in range(ens_num):
 # Finished Loop
 U.print_separation('#...Finished Ensemble Loop',type=2)
 
+# Create run_dict
+names = ['HaloID']
+run_dict = ez.create(names,locals())
+run_dict.update({'_name_':'run_dict'})
+
 ### Save Data into .pkl Files ###
 if write_data == True:
 	U.print_separation('##...Starting Data Write',type=2)
@@ -136,6 +141,7 @@ if write_data == True:
 		output = pkl.Pickler(pkl_file)
 		output.dump(STACK_DATA[m])
 		output.dump(varib)
+		output.dump(run_dict)
 		pkl_file.close()
 
 	U.print_separation('#...Finished Data Write',type=2)

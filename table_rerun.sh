@@ -158,7 +158,7 @@ do
 	sed -e "s:@@filename@@:$filename:g;s:@@job_name@@:$job_name:g;s:@@write_loc@@:$write_loc:g;s:@@data_loc@@:$data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $data_loc/$write_loc/script_rerun.sh
 
 	# Submit Script to PBS via qsub
-#	qsub $data_loc/$write_loc/script_rerun.sh 
+	qsub $data_loc/$write_loc/script_rerun.sh 
 	echo ""
 
 	m=$((m+1))
