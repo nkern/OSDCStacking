@@ -31,6 +31,7 @@ data_loc	= '@@data_loc@@'		# Alternative data_loc, either None or String
 write_loc	= '@@write_loc@@'		# Alternative write_loc, either None or String
 
 # Other Techniques
+edge_perc       = @@edge_perc@@			# Percent of Top galaxies used in edge detection technique
 mass_scat	= @@mass_scat@@			# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
 center_scat	= @@center_scat@@		# If guessing halo center, fractional induced scatter into known center
 avg_meth	= @@avg_meth@@			# If bin stacking, by which method do you average bin properties? (ex. median, mean)

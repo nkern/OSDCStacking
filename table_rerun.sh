@@ -37,6 +37,7 @@ job_num=(14 14 14 14 14 14 21)			# Number of Jobs Submitted
 halo_num=2100					
 
 # Other Techniques
+edge_perc=0.1					# Percent of Top galaxies used in edge detection technique
 mass_scat=None					# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
 center_scat=None				# If guessing halo center, fractional induced scatter into known center
 avg_meth="'median'"				# If bin stacking, by which method do you average bin properties? (ex. median, mean)
