@@ -9,6 +9,6 @@
 
 cd /glusterfs/users/caustics1/nkern/OSDCStacking/@@data_loc@@/@@write_loc@@
 
-python /glusterfs/users/caustics1/nkern/OSDCStacking/caustic_mass_stack2D.py @@run_num@@ 
+python /glusterfs/users/caustics1/nkern/OSDCStacking/@@filename@@.py @@run_num@@ 
 
 

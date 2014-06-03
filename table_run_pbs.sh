@@ -12,6 +12,6 @@
 cd /glusterfs/users/caustics1/nkern/OSDCStacking/@@data_loc@@/@@write_loc@@
 
 # Run Code with run_num dynamically defined
-python /glusterfs/users/caustics1/nkern/OSDCStacking/caustic_mass_stack2D.py $PBS_ARRAYID
+python /glusterfs/users/caustics1/nkern/OSDCStacking/@@filename@@.py $PBS_ARRAYID
 
 
