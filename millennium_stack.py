@@ -51,6 +51,7 @@ if bootstrap == True:
 ## Make dictionary for loaded constants, doesn't matter if some don't exist
 keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_clean','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror']
 varib = ez.create(keys,locals())
+varib.update({'_name_':'varib'})
 
 ## INITIALIZATION ##
 S = Stack(varib)
@@ -62,7 +63,7 @@ U.print_separation('## Running caustic_mass_stack.py')
 U.print_varibs(varib)
 
 ## Load Halo Data
-U.print_separation('# ...Loading Halos',type=2)
+U.print_separation('# ...Loading Halos',type=1)
 HaloID,HaloData = M.load_halos()
 
 # Sort Halos by A Priori Known Descending Mass (Mass Critical 200)
@@ -78,7 +79,7 @@ Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
 # Initialize Multi-Ensemble Array to hold resultant data
 STACK_DATA = []
 
-U.print_separation('# ...Starting Ensemble Loop',type=2)
+U.print_separation('# ...Starting Ensemble Loop',type=1)
 #  j: index for each ensemble, w.r.t. the FOR loop
 #  k: index for each final ensemble, w.r.t. total number of final ensembles
 #  l: index for line of sight, w.r.t. total lines of sight of run
@@ -114,7 +115,7 @@ for j in range(ens_num):
 	stack_data = S.caustic_stack(PS.Rdata,PS.Vdata,PS.HaloID,np.vstack([PS.M200,PS.R200,PS.HVD]),line_num,feed_mags=True,G_Mags=PS.G_Mags,R_Mags=PS.R_Mags,I_Mags=PS.I_Mags)
 
 	# Append other Arrays
-	extra = {'pro_pos':PS.pro_pos}
+	extra = {'pro_pos':PS.pro_pos,'_name_':'stack_data'}
 	stack_data.update(extra)
 
 	# Append to STACK_DATA
@@ -135,7 +136,6 @@ if write_data == True:
 		output = pkl.Pickler(pkl_file)
 		output.dump(STACK_DATA[m])
 		output.dump(varib)
-		output.dump(run_dict)
 		pkl_file.close()
 
 	U.print_separation('#...Finished Data Write',type=2)
