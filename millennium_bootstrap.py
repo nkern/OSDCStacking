@@ -1,8 +1,9 @@
-## millennium_stack.py
+## millennium_bootstrap.py
 """
 This program uses the Caustic Technique to estimate the masses of galaxy clusters,
 after having applied a stacking technique to create ensemble clusters.
-This script does strictly self stacking or bin stacking.
+Iterating the same process multiple times, we calculate the repeatability errors
+of our analysis, also known as a bootstrap analysis.
 """
 
 ###################### BEGIN STANDARD PREAMBLE #####################
@@ -57,7 +58,7 @@ S = Stack(varib)
 U = Universal(varib)
 M = Millennium(varib)
 
-U.print_separation('## Running millennium_stack.py')
+U.print_separation('## Running millennium_bootstrap.py')
 names = ['run_time','','run_num','gal_num','line_num','cell_num','ens_num','halo_num','method_num','avg_meth','','self_stack','mass_mix','write_data','scale_data','run_los','mirror','new_halo_cent','cent_offset','true_mems','init_clean','bootstrap','','mass_scat','center_scat','bootstrap_num','bootstrap_rep','','data_loc','write_loc']
 U.print_varibs(names,varib)
 
@@ -68,7 +69,7 @@ HaloID,HaloData = M.load_halos()
 # Sort Halos by A Priori Known Descending Mass (Mass Critical 200)
 HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 
-####################### END STANDARD PREAMBLE ##############################
+############### END STANDARD PREAMBLE ######################
 
 # Define run_dict
 pre_run = False
@@ -103,18 +104,25 @@ for j in range(ens_num):
 	# Define Container to Hold Phase Space Data
 	PS = Data()
 
+	## Determine which clusters to stack in bootstrap ##
+	# Random line_num clusters from set of line_num clusters, with repetition allowed
+	bootstrap_select = npr.randint(stack_range[j*line_num:(j+1)*line_num][0],stack_range[j*line_num:(j+1)*line_num][-1]+1,line_num)
+	print 'bootstrap_select:'
+	print bootstrap_select
+
 	# Iterate through lines of sight
 	U.print_separation('## Working on Ensemble '+str(j),type=1)
 	ens_gal_count = 0
 	for l in range(line_num):
+
+		# Determine multiplicity and weight of this particular cluster in ensemble
+		s = stack_range[j*line_num:(j+1)*line_num][l]
+		clus_multi = np.where(bootstrap_select == s)[0]
+		clus_weight = len(clus_multi)
+
 		print '...Loading galaxy data and projecting line of sight #'+str(l)
-
 		# Load galaxy data, project it, then append to PS
-		if self_stack == True:
-			M.load_project_append(HaloID[stack_range][j],M_crit200[stack_range][j],R_crit200[stack_range][j],HVD[stack_range][j],Z[stack_range][j],Halo_P[stack_range][j],Halo_V[stack_range][j],PS)
-
-		else:
-			M.load_project_append(HaloID[stack_range][j*line_num:(j+1)*line_num][l],M_crit200[stack_range][j*line_num:(j+1)*line_num][l],R_crit200[stack_range][j*line_num:(j+1)*line_num][l],HVD[stack_range][j*line_num:(j+1)*line_num][l],Z[stack_range][j*line_num:(j+1)*line_num][l],Halo_P[stack_range][j*line_num:(j+1)*line_num][l],Halo_V[stack_range][j*line_num:(j+1)*line_num][l],PS)
+		M.load_project_append_bootstrap(HaloID[stack_range][j*line_num:(j+1)*line_num][l],M_crit200[stack_range][j*line_num:(j+1)*line_num][l],R_crit200[stack_range][j*line_num:(j+1)*line_num][l],HVD[stack_range][j*line_num:(j+1)*line_num][l],Z[stack_range][j*line_num:(j+1)*line_num][l],Halo_P[stack_range][j*line_num:(j+1)*line_num][l],Halo_V[stack_range][j*line_num:(j+1)*line_num][l],PS,clus_weight)
 
 
 	PS.to_array(['Rdata','Vdata','HaloID','M200','R200','HVD','G_mags','R_Mags','I_Mags'])
@@ -123,7 +131,7 @@ for j in range(ens_num):
 	stack_data = S.caustic_stack(PS.Rdata,PS.Vdata,PS.HaloID,np.vstack([PS.M200,PS.R200,PS.HVD]),line_num,feed_mags=True,G_Mags=PS.G_Mags,R_Mags=PS.R_Mags,I_Mags=PS.I_Mags)
 
 	# Append other Arrays
-	extra = {'pro_pos':PS.pro_pos,'_name_':'stack_data'}
+	extra = {'pro_pos':PS.pro_pos,'_name_':'stack_data','bootstrap_select':bootstrap_select}
 	stack_data.update(extra)
 
 	# Append to STACK_DATA
@@ -154,6 +162,9 @@ if duration < 60:
 	time.sleep(60-duration)
 	
 
-U.print_separation('## Finished millennium_stack.py'+'\n'+'Start:'+'\t'+run_time+'\n'+'End:'+'\t'+time.asctime(),type=1)
+U.print_separation('## Finished millennium_bootstrap.py'+'\n'+'Start:'+'\t'+run_time+'\n'+'End:'+'\t'+time.asctime(),type=1)
+
+
+
 
 

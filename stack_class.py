@@ -6,7 +6,6 @@ programs.
 """
 
 from caustic_stack import *
-from analysis import *
 
 
 
@@ -148,6 +147,77 @@ class Millennium(object):
 
 		# Append to PS
 		PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
+
+
+        def load_project_append_bootstrap(self,HaloID,M200,R200,HVD,Z,Halo_P,Halo_V,PS,weight):
+                """
+                This function loads galaxy data then projects it, discarding the galaxy data after using it to save memory
+                """
+
+                # Load Galaxies
+                Gal_P,Gal_V,G_Mags,R_Mags,I_Mags = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+
+                # Do Projection
+                r, v, pro_pos = self.U.line_of_sight(Gal_P,Gal_V,Halo_P,Halo_V,project=False)
+
+                r = np.array(r)
+                v = np.array(v)
+                pro_pos = np.array(pro_pos)
+                G_Mags = np.array(G_Mags)
+                R_Mags = np.array(R_Mags)
+                I_Mags = np.array(I_Mags)
+
+		for m in range(weight):
+                	# Append to PS
+                	PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
+
+
+
+	def mass_mixing(self,HaloID,HaloData,mass_scat):
+		'''
+		This function performs a mass mixing procedure with a given fractional scatter in assumed mass
+		'''
+
+		# Unpack Array
+		M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
+		
+		# Create lognormal distribution about 1 with width mass_scat, length HaloID.size
+		mass_mix = npr.lognormal(0,mass_scat,len(HaloID))
+
+		# Apply Mass Scatter
+		M_crit200 *= mass_mix
+
+		# Create M200_match array
+		M_crit200_match = np.copy(M_crit200)
+	
+		# Sort by Descending Mass
+		sort = np.argsort(M_crit200)[::-1]
+		M_crit200 = M_crit200[sort]
+		R_crit200 = R_crit200[sort]
+		Z = Z[sort]
+		HVD = HVD[sort]
+		HPX = HPX[sort]
+		HPY = HPY[sort]
+		HPZ = HPZ[sort]
+		HVX = HVX[sort]
+		HVY = HVY[sort]
+		HVZ = HVZ[sort]
+		HaloID = HaloID[sort]
+
+		# Re-pack
+		HaloData = np.array([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
+
+		return HaloID,HaloData,sort
+
+
+
+
+
+
+
+
+
+
 
 
 
