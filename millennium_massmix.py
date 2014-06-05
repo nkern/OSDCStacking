@@ -73,8 +73,7 @@ HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 # Mass Mix if applicable
 if mass_mix == True:
 	HaloID_init,HaloData_init = np.copy(HaloID),np.copy(HaloData)
-        pre_run = False
-        if pre_run == True:
+	try:
 		""" Need to create 1 mass mixed array that every job loads in to preserve consistency"""
 		# Mass Mix arrays
 		HaloID,HaloData,massmix_sort = M.mass_mixing(HaloID,HaloData,float(mass_scat))
@@ -83,15 +82,15 @@ if mass_mix == True:
 		BinData = U.Bin_Calc(HaloData[0][:halo_num],HaloData[1][:halo_num],HaloData[3][:halo_num])
 		TrueBinData = U.Bin_Calc(HaloData_init[0][:halo_num],HaloData_init[1][:halo_num],HaloData_init[3][:halo_num])
 
-		# Dump Data in to mm_halo_array.pkl
-		f = open(root+'/OSDCStacking/'+data_loc+'/mm_halo_array.pkl','wb')
+		# Dump Data in to halo_arrays.pkl
+		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')
 		output = pkl.Pickler(f)
 		data = {'massmix_sort':massmix_sort,'HaloID':HaloID,'HaloData':HaloData,'HaloID_init':HaloID_init,'HaloData_init':HaloData_init,'BinData':BinData,'TrueBinData':TrueBinData}
 		output.dump(data)
 		f.close()
 
-	else:
-		f = open(root+'/OSDCStacking/'+data_loc+'/mm_halo_array.pkl','rb')
+	except IOError:
+		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','rb')
 		input = pkl.Unpickler(f)
 		globals().update(input.load())
 

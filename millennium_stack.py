@@ -70,14 +70,18 @@ HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 
 ####################### END STANDARD PREAMBLE ##############################
 
-# Define run_dict
-pre_run = False
-if pre_run == True:
-	f = open(root+'/OSDCStacking/'+data_loc+'/run_dictionary.pkl','wb')	
+# Output ordering of halos if halo_arrays.pkl doesn't exist, otherwise load them in
+try:
+	f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')	
 	output = pkl.Pickler(f)
 	run_dict = {'HaloID':HaloID,'HaloData':HaloData}
 	output.dump(run_dict)
 	f.close()
+except IOError:
+	f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')
+	input = pkl.Pickler(f)	
+	run_dict = input.load()
+	globals().update(run_dict)
 
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
