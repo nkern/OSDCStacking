@@ -287,29 +287,14 @@ class Work(Recover):
 
 	def __init__(self,Recover):
 		pass	
+
 	
-	def append_data(self,kwargs,i):
+	def append_data(self,kwargs,D):
 		''' This function was created so as to reclaim the mydict dictionary memory after exiting the function.'''
-		
 		# Load in Data from Run Table and append
 		mydict = self.recover(**kwargs)
-		d = AttrDict(mydict)
-		self.RUN_NUM.append(i)
-		self.GAL_NUM.append(d.gal_num)
-		self.LINE_NUM.append(d.line_num)
-		self.ENS_MBIAS.append(d.ens_mbias)
-		self.ENS_MSCAT.append(d.ens_mscat)
-		self.ENS_VBIAS.append(d.ens_vbias)
-		self.ENS_VSCAT.append(d.ens_vscat)
-		self.LOS_MBIAS.append(d.los_mbias)
-		self.LOS_MSCAT.append(d.los_mscat)
-		self.LOS_VBIAS.append(d.los_vbias)
-		self.LOS_VSCAT.append(d.los_vscat)	
-		if kwargs['cent_offset'] != None:
-			self.OFF_ENS_MBIAS.append(d.off_ens_mbias)
-			self.OFF_ENS_MSCAT.append(d.off_ens_mscat)
-			self.OFF_ENS_VBIAS.append(d.off_ens_vbias)
-			self.OFF_ENS_VSCAT.append(d.off_ens_vscat)
+		stack_names = ['gal_num','line_num','run_num','ens_mbias','ens_vbias','ens_mscat','ens_vscat','los_mbias','los_mscat','los_vbias','los_vscat']
+		D.append(mydict,keys=stack_names)
 
 
 	def load_all(self,iter_array=None,tab_shape=None,ens_only=True,kwargs=None,write_stem=None):
@@ -318,6 +303,9 @@ class Work(Recover):
 		It is recommended to do any calculations (statistics, plots etc.) within the for loop, and
 		then feed results back out via a global variable.
 		'''
+		# Create Open Container for data
+		D = Data()
+
 		# Feed Local Variables
 		self.ens_only = ens_only	
 		if kwargs == None:
@@ -334,13 +322,6 @@ class Work(Recover):
 		## Calculate Ensemble Only Statistics
 		if self.ens_only == True:
 
-			# Create arrays
-			self.ENS_MBIAS,self.ENS_MSCAT,self.ENS_VBIAS,self.ENS_VSCAT = [],[],[],[]
-			self.LOS_MBIAS,self.LOS_MSCAT,self.LOS_VBIAS,self.LOS_VSCAT = [],[],[],[]
-			self.RUN_NUM,self.GAL_NUM,self.LINE_NUM = [],[],[]
-			if kwargs['cent_offset'] != None:
-				self.OFF_ENS_MBIAS,self.OFF_ENS_MSCAT,self.OFF_ENS_VBIAS,self.OFF_ENS_VSCAT = [],[],[],[]
-
 			# Iterate over runs for ensemble data
 			print '...Loading Data from '+str(len(iter_array))+' runs'
 			for i in iter_array:
@@ -354,36 +335,82 @@ class Work(Recover):
 				print kwargs
 				
 				## Load and Append Data		
-				self.append_data(kwargs,i)
+				self.append_data(kwargs,D)
 
 			# Make into arrays that resemble table
 			print 'Table Shape =',tab_shape
-			self.ENS_MBIAS,self.ENS_MSCAT,self.ENS_VBIAS,self.ENS_VSCAT = np.array(self.ENS_MBIAS).reshape(tab_shape),np.array(self.ENS_MSCAT).reshape(tab_shape),np.array(self.ENS_VBIAS).reshape(tab_shape),np.array(self.ENS_VSCAT).reshape(tab_shape)
-			self.LOS_MBIAS,self.LOS_MSCAT,self.LOS_VBIAS,self.LOS_VSCAT = np.array(self.LOS_MBIAS).reshape(tab_shape),np.array(self.LOS_MSCAT).reshape(tab_shape),np.array(self.LOS_VBIAS).reshape(tab_shape),np.array(self.LOS_VSCAT).reshape(tab_shape)
-			self.RUN_NUM,self.GAL_NUM,self.LINE_NUM = np.array(self.RUN_NUM).reshape(tab_shape),np.array(self.GAL_NUM).reshape(tab_shape),np.array(self.LINE_NUM).reshape(tab_shape) 
+			D.upper()
+			D.to_array(D.__dict__.keys())
 
-			if kwargs['cent_offset'] != None:
-				self.OFF_ENS_MBIAS,self.OFF_ENS_MSCAT,self.OFF_ENS_VBIAS,self.OFF_ENS_VSCAT = np.array(self.OFF_ENS_MBIAS).reshape(tab_shape),np.array(self.OFF_ENS_MSCAT).reshape(tab_shape),np.array(self.OFF_ENS_VBIAS).reshape(tab_shape),np.array(self.OFF_ENS_VSCAT).reshape(tab_shape)
+			for name in ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_MSCAT','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM']:
+				D.__dict__[name] = D.__dict__[name].reshape(tab_shape)
 
 			# Other Data Arrays
-			self.RICH_NUM = self.GAL_NUM*self.LINE_NUM
+			D.RICH_NUM = D.GAL_NUM*D.LINE_NUM
 
-			# Create Dictionary
-			names = ['ENS_MBIAS','ENS_MSCAT','ENS_VBIAS','ENS_VSCAT','LOS_MBIAS','LOS_VBIAS','LOS_VSCAT','RUN_NUM','GAL_NUM','LINE_NUM','RICH_NUM','OFF_ENS_MBIAS','OFF_ENS_MSCAT','OFF_ENS_VBIAS','OFF_ENS_VSCAT']
-			dictionary = ez.create(names,self.__dict__)
-	
-			return dictionary
+			return D.__dict__
 
 
 		else:
 			pass
 
 
-	def bootstrap_load_write(self):
+	def bootstrap_load_write(self,rep_nums,cell_nums,data_stem='binstack/bootstrap1/rep',where_to_write='binstack/bootstrap1/',write_data=True):
 		''' 
-		Performs a load_all() on bootstrap run tables over all repetitions, then writes out pertinent data
+		Performs a R.recover() on bootstrap run tables over all repetitions, then writes out data
 		'''
-		pass
+		# create dictionary for all data
+		data = {}
+	
+		# iterate through cell_nums and reps
+		for i in cell_nums:
+			MFRAC,VFRAC,CAUMASS,HVD,BINM200,BINHVD,MBIAS,MSCAT,VBIAS,VSCAT = [],[],[],[],[],[],[],[],[],[]
+			BINM200_STD,BINHVD_STD = [],[]
+			for j in rep_nums:
+				d = R.recover("bo_m0_run"+str(i),ss=False,mm=False,go_global=False,data_loc=data_stem+str(j))
+				MFRAC.append(d['ENS_MFRAC'].ravel())
+				VFRAC.append(d['ENS_VFRAC'].ravel())
+				CAUMASS.append(d['ENS_CAUMASS'].ravel())
+				HVD.append(d['ENS_HVD'].ravel())
+				BINM200.append(d['BINM200'].ravel())	
+				BINHVD.append(d['BINHVD'].ravel())
+				MBIAS.append(d['ens_mbias'])
+				MSCAT.append(d['ens_mscat'])
+				VBIAS.append(d['ens_vbias'])
+				VSCAT.append(d['ens_vscat'])
+
+				# Find std of BINM200 and BINHVD
+				BINM200_STD.append(map(np.std,zip(*[iter(d['M_crit200'][:d['halo_num']])]*d['line_num'])))
+				BINHVD_STD.append(map(np.std,zip(*[iter(d['HVD'][:d['halo_num']])]*d['line_num'])))
+
+			MFRAC = np.array(MFRAC)
+			VFRAC = np.array(VFRAC)
+			CAUMASS = np.array(CAUMASS)
+			HVD = np.array(HVD)
+			BINM200 = np.array(BINM200)
+			BINHVD = np.array(BINHVD)
+			MBIAS = np.array(MBIAS)
+			MSCAT = np.array(MSCAT)
+			VBIAS = np.array(VBIAS)
+			VSCAT = np.array(VSCAT)
+			BINM200_STD = np.array(BINM200_STD)
+			BINHVD_STD = np.array(BINHVD_STD)		
+	
+			keys = ['MFRAC','VFRAC','CAUMASS','HVD','BINM200','BINHVD','MBIAS','MSCAT','VBIAS','VSCAT','BINM200_STD','BINHVD_STD']
+			cell_data = ez.create(keys,locals())
+
+			for name in cell_data.keys():
+				new_name = name+'_cell'+str(i)
+				cell_data[new_name] = cell_data.pop(name)
+
+			data.update(cell_data)		
+
+		if write_data == True:
+			file = open(where_to_write+'bootstrap_errors.pkl','wb')
+			output = pkl.Pickler(file)
+			output.dump(data)
+
+		return data
 
 
 	def oto(self,xarray,yarray,style='ko',alpha=None):
@@ -455,6 +482,7 @@ if work == True:
 
 	output.dump(dictionary)
 
+	file.close()
 
 
 

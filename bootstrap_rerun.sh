@@ -6,7 +6,7 @@
 ######################
 
 ## Initialize Configuration Arrays and Other Constants
-filename=millennium_stack			# Primary file to be run
+filename=millennium_bootstrap			# Primary file to be run
 
 ### FLAGS ###
 self_stack=False				# Run self-stack or bin-stack
@@ -15,7 +15,7 @@ write_data=True					# Write Data to Result directories if True
 init_clean=False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set=False					# 100 Halo Set or 2000 Halo Set
 mass_mix=False					# Incorporate Mass Mixing Models?
-bootstrap=False					# Perform a bootstrapping technique to estimate error in mass estimation?
+bootstrap=True					# Perform a bootstrapping technique to estimate error in mass estimation?
 new_halo_cent=True				# Use Updated Halo Centers instead of BCG Values
 true_mems=False					# Run with only gals within r200?
 run_los=False					# Run line of sight mass estimation or not
@@ -28,26 +28,32 @@ gal_num=(5 10 15 25 50 100 150)			# Ngal number
 line_num=(2 5 10 15 25 50 100)			# Line of Sight Number 
 method_num=0					# Ensemble Build Method Number
 cell_num=($(seq 1 49))				# Number of Cells
-table_num=5					# Table Re-Run Version  
-job_name="BIN-STACK"				# PBS Job Name Stem
+table_num=1					# Table Re-Run Version  
+job_name="BOOTSTRAP"				# PBS Job Name Stem
 job_num=(14 14 14 14 14 14 21)			# Number of Jobs Submitted
 halo_num=2100					
-root="/glusterfs/users/caustics1/nkern"         # Base Directory
 
 # Other Techniques
 edge_perc=0.1					# Percent of Top galaxies used in edge detection technique
 mass_scat=None					# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
 center_scat=None				# If guessing halo center, fractional induced scatter into known center
 avg_meth="'median'"				# If bin stacking, by which method do you average bin properties? (ex. median, mean)
-bootstrap_num=None				# Highest directory marker for bootstrap data, ex. bootstrap1
-bootstrap_rep=None				# Bootstrap repetition directory marker, ex. bootstrap1/rep1
+bootstrap_num=1					# Highest directory marker for bootstrap data, ex. bootstrap1
+bootstrap_rep=$1				# Bootstrap repetition directory marker, ex. bootstrap1/rep1
 
 # Location
-write_stem="bs_m0_run"                          # Stem of write_loc directory
-data_loc="binstack/bs_run_table$table_num"      # Highest Directory for Data
+write_stem="bo_m0_run"  		                       	    # Stem of write_loc directory
+data_loc="binstack/bootstrap$bootstrap_num/rep$bootstrap_rep"     # Highest Directory for Data
+base_dir="/glusterfs/users/caustics1/nkern" 			    # Base Directory
+
+## For Bootstrapping Only
+if [ $bootstrap == 'True' ]
+then
+        cell_select=(9 13 23 27)        # Cells to run bootstrap over
+fi
 
 ## Go To Stacking Directory ##
-cd $root/OSDCStacking
+cd $base_dir/OSDCStacking
 
 ## Check Directory ##
 echo "Loaded Directory is: $data_loc"
@@ -68,6 +74,22 @@ do
 	for j in {0..6}
 	do
 		let "k=$i*7+($j+1)"
+
+		### Bootstrap ###
+		pass=0  
+		for z in ${cell_select[*]}
+		do      
+			if [ $z == $k ]
+			then    
+				pass=$((pass+1))
+			fi      
+		done    
+		if [ $pass == 0 ]
+		then    
+			continue
+		fi      
+		#################
+
 		dir=$write_stem$k
 		echo "Working on Directory: $dir..."
 		m=0
@@ -126,7 +148,7 @@ do
 done
 
 ## Go to Stacking Directory
-cd $root/OSDCStacking
+cd $base_dir/OSDCStacking
 
 m=0
 for k in ${DIRS[*]}
