@@ -161,7 +161,7 @@ do
 
 	# Submit Script to PBS via qsub	
 	echo "Submitting Job to PBS"
-	qsub $data_loc/$write_loc/script_rerun.sh 
+	#qsub $data_loc/$write_loc/script_rerun.sh 
 	echo ""
 
 	m=$((m+1))

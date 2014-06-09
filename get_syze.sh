@@ -9,6 +9,6 @@
 
 TZ=America/Detroit date
 
-cd /glusterfs/users/caustics1/nkern
+cd /glusterfs/users/caustics1/nkern/OSDCStacking
 du -hcs *
 
