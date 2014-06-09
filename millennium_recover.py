@@ -36,7 +36,7 @@ class Recover(Universal):
 		pass
 
 
-	def recover(self,write_loc=None,raw_data=False,ss=True,mm=False,go_global=True,ens_only=True,data_loc=None,bootstrap=False,avg_meth=None,cent_offset=None):
+	def recover(self,write_loc=None,raw_data=False,ss=True,mm=False,go_global=True,ens_only=True,data_loc=None,avg_meth=None,cent_offset=None):
 
 		"""
 		This function uploads the pickle files from directory stack_data and configures them into multi dimensional arrays.
