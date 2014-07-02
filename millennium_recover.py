@@ -462,7 +462,7 @@ if work == True:
 	iter_array	= np.arange(1,50)
 	tab_shape	= (7,7)
 	write_stem	= 'bs_m0_run'
-	write_loc	= 'bs_m0_run1'
+	write_loc	= 'bs_m0_run5'
 	data_loc	= 'binstack/bs_run_table'+str(table_num)
 	ss		= False
 	mm		= False

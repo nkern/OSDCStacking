@@ -16,14 +16,14 @@ bootstrap	= False				# Perform a bootstrapping technique to estimate error in ma
 new_halo_cent	= True				# Use Updated Halo Centers instead of BCG Values
 mirror		= True				# Mirror Phase Space in Caustic Surface Estimation?
 true_mems	= False				# Run with only gals within r200?
-run_los         = True				# Run line of sight mass estimation or not
+run_los         = False				# Run line of sight mass estimation or not
 cent_offset     = None                          # Either 'r', 'v', 'full', or None.
 
 ### CONSTANTS ###
 # Run Dependent
-ens_num         = 5				# Number of Ensembles to build and solve for IN THIS RUN
-gal_num         = 200				# Number of galaxies taken per line of sight
-line_num        = 5				# Number of lines of sight to stack over
+ens_num         = 1				# Number of Ensembles to build and solve for IN THIS RUN
+gal_num         = 1000				# Number of galaxies taken per line of sight
+line_num        = 20				# Number of lines of sight to stack over
 method_num      = 0                             # Ensemble Build Method Number
 cell_num        = 0                             # Cell Number ID corresponding to given gal_num & line_num geometry in a Run Table
 table_num       = 1                             # Table Re-Run Version  
