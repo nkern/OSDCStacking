@@ -16,8 +16,8 @@ fi
 filename=millennium_stack			# Primary file to be run
 
 ### FLAGS ###
-self_stack=False				# Run self-stack or bin-stack
-scale_data=True					# Scale data by r200 if True
+self_stack=True					# Run self-stack or bin-stack
+scale_data=False				# Scale data by r200 if True
 write_data=True					# Write Data to Result directories if True
 init_clean=False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set=False					# 100 Halo Set or 2000 Halo Set
@@ -33,12 +33,12 @@ cent_offset=None				# Either 'r', 'v', 'full', or None.
 # Run Dependent
 gal_num=(5 10 15 25 50 100 150)			# Ngal number
 line_num=(2 5 10 15 25 50 100)			# Line of Sight Number 
-method_num=0					# Ensemble Build Method Number
+method_num=1					# Ensemble Build Method Number
 cell_num=($(seq 1 49))				# Number of Cells
-table_num=5					# Table Re-Run Version  
-job_name="BIN-STACK"				# PBS Job Name Stem
+table_num=2					# Table Re-Run Version  
+job_name="SELF-STACK"				# PBS Job Name Stem
 halo_num=2100                                   # Total number of halos to work with
-root="/glusterfs/users/caustics1/nkern"         # Base Directory
+root="'/glusterfs/users/caustics1/nkern'"       # Base Directory
 
 # Other Techniques
 edge_perc=0.1					# Percent of Top galaxies used in edge detection technique
@@ -49,8 +49,8 @@ bootstrap_num=None				# Highest directory marker for bootstrap data, ex. bootstr
 bootstrap_rep=None				# Bootstrap repetition directory marker, ex. bootstrap1/rep1
 
 # Location
-write_stem="bs_m0_run"				# Stem of write_loc directory
-data_loc="binstack/bs_run_table$table_num"	# Highest Directory for Data
+write_stem="ss_m1_run"				# Stem of write_loc directory
+data_loc="selfstack/ss_run_table$table_num"	# Highest Directory for Data
 
 
 ## Go To Stacking Directory ##

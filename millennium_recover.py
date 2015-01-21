@@ -9,7 +9,8 @@ import cPickle as pkl
 import numpy as np
 import matplotlib.pyplot as mp
 import numpy.ma as ma
-import astStats
+#import astStats
+import astrostats
 from mpl_toolkits.mplot3d import Axes3D
 import sys
 from AttrDict import AttrDict
@@ -137,18 +138,18 @@ class Recover(Universal):
 		### Statistical Calculations ###
 		################################
 		if self.ss:	# If self stacking is True
-			M200 = D.M_crit200[0:self.halo_num]
-			HVD200 = D.HVD[0:self.halo_num]	
-			ENS_MFRAC,ens_mbias,ens_mscat,ENS_VFRAC,ens_vbias,ens_vscat = self.stat_calc(D.ENS_CAUMASS,D.M200,D.ENS_HVD,D.HVD200)
+			D.M200 = D.M_crit200[0:self.halo_num]
+			D.HVD200 = D.HVD[0:self.halo_num]	
+			ENS_MFRAC,ens_mbias,ens_mscat,ENS_VFRAC,ens_vbias,ens_vscat = self.stat_calc(D.ENS_CAUMASS.ravel(),D.M200,D.ENS_HVD.ravel(),D.HVD200)
 			if ens_only == True:
 				LOS_MFRAC,los_mbias,los_mscat,LOS_VFRAC,los_vbias,los_vscat = None,None,None,None,None,None
 			else:
 				LOS_MFRAC,los_mbias,los_mscat,LOS_VFRAC,los_vbias,los_vscat = self.stat_calc(D.LOS_CAUMASS.ravel(),D.M_crit200[0:self.halo_num],D.LOS_HVD.ravel(),D.HVD[0:self.halo_num],ens=False)
 		else:		# If self stacking is False
 			if mm == True:
-				ENS_MFRAC,ens_mbias,ens_mscat,ENS_VFRAC,ens_vbias,ens_vscat = self.stat_calc(D.ENS_CAUMASS,D.BINM200,D.ENS_HVD,D.BINHVD,data_set=None)#'cut_low_mass')
+				ENS_MFRAC,ens_mbias,ens_mscat,ENS_VFRAC,ens_vbias,ens_vscat = self.stat_calc(D.ENS_EDGEMASS,D.BINM200,D.ENS_HVD,D.BINHVD,data_set=None)#'cut_low_mass')
 			else:	
-				ENS_MFRAC,ens_mbias,ens_mscat,ENS_VFRAC,ens_vbias,ens_vscat = self.stat_calc(D.ENS_CAUMASS,D.BINM200,D.ENS_HVD,D.BINHVD)	
+				ENS_MFRAC,ens_mbias,ens_mscat,ENS_VFRAC,ens_vbias,ens_vscat = self.stat_calc(D.ENS_EDGEMASS,D.BINM200,D.ENS_HVD,D.BINHVD)	
 			if ens_only == True:
 				LOS_MFRAC,los_mbias,los_mscat,LOS_VFRAC,los_vbias,los_vscat = None,None,None,None,None,None
 			else:
@@ -185,7 +186,7 @@ class Recover(Universal):
 
 		# Define a Masked array for sometimes zero terms
 		epsilon = 10.0
-		use_est = False				# Use MassCalc estimated r200 mass values if true 
+		use_est = False				# Use MassCalc estimated r200 mass values if true
 		maMASS_EST	= ma.masked_array(MASS_EST,mask=MASS_EST<epsilon)		# Mask essentially zero values
 		maHVD_EST	= ma.masked_array(HVD_EST,mask=HVD_EST<epsilon)
 
@@ -204,8 +205,8 @@ class Recover(Universal):
 			MFRAC,VFRAC = np.array(MFRAC),np.array(VFRAC)
 
 		if ens == True:
-			mbias,mscat = astStats.biweightLocation(MFRAC,6.0),astStats.biweightScale(MFRAC,9.0)
-			vbias,vscat = astStats.biweightLocation(VFRAC,6.0),astStats.biweightScale(VFRAC,9.0)
+			mbias,mscat = astrostats.biweight_location(MFRAC,6.0),astrostats.biweight_midvariance(MFRAC,9.0)
+			vbias,vscat = astrostats.biweight_location(VFRAC,6.0),astrostats.biweight_midvariance(VFRAC,9.0)
 			return MFRAC,mbias,mscat,VFRAC,vbias,vscat
 		else:
 			if self.ss:
@@ -215,8 +216,8 @@ class Recover(Universal):
 				VERT_MFRAC,VERT_VFRAC = [],[]
 				for a in range(self.line_num):
 					if len(ma.compressed(MFRAC[:,a])) > 4:
-						VERT_MFRAC.append( astStats.biweightLocation( ma.compressed( MFRAC[:,a] ), 6.0 ) )
-						VERT_VFRAC.append( astStats.biweightLocation( ma.compressed( VFRAC[:,a] ), 6.0 ) )
+						VERT_MFRAC.append( astrostats.biweight_location( ma.compressed( MFRAC[:,a] ), 6.0 ) )
+						VERT_VFRAC.append( astrostats.biweight_location( ma.compressed( VFRAC[:,a] ), 6.0 ) )
 					else:
 						VERT_MFRAC.append( np.median( ma.compressed( MFRAC[:,a] ) ) )
 						VERT_VFRAC.append( np.median( ma.compressed( VFRAC[:,a] ) ) )
@@ -224,19 +225,19 @@ class Recover(Universal):
 				# Create horizontally averaged (by line of sight) arrays, with halo_num elements
 				for a in self.halo_range:
 					if len(ma.compressed(MFRAC[a])) > 4:
-						HORZ_MFRAC.append( astStats.biweightLocation( ma.compressed( MFRAC[a] ), 6.0 ) )
-						HORZ_VFRAC.append( astStats.biweightLocation( ma.compressed( VFRAC[a] ), 6.0 ) )
+						HORZ_MFRAC.append( astrostats.biweight_location( ma.compressed( MFRAC[a] ), 6.0 ) )
+						HORZ_VFRAC.append( astrostats.biweight_location( ma.compressed( VFRAC[a] ), 6.0 ) )
 					else:
 						HORZ_MFRAC.append( np.median( ma.compressed( MFRAC[a] ) ) )
 						HORZ_VFRAC.append( np.median( ma.compressed( VFRAC[a] ) ) )
 				HORZ_MFRAC,HORZ_VFRAC = np.array(HORZ_MFRAC),np.array(HORZ_VFRAC)
 				# Bias and Scatter Calculations
-				mbias,mscat = astStats.biweightLocation(VERT_MFRAC,6.0),astStats.biweightScale(VERT_MFRAC,9.0)
-				vbias,vscat = astStats.biweightLocation(VERT_VFRAC,6.0),astStats.biweightScale(VERT_VFRAC,9.0)
+				mbias,mscat = astrostats.biweight_location(VERT_MFRAC,6.0),astrostats.biweight_midvariance(VERT_MFRAC,9.0)
+				vbias,vscat = astrostats.biweight_location(VERT_VFRAC,6.0),astrostats.biweight_midvariance(VERT_VFRAC,9.0)
 			else:
 				# Bin stack LOS systems need only one average
-				mbias,mscat = astStats.biweightLocation(MFRAC,6.0),astStats.biweightScale(MFRAC,9.0)
-				vbias,vscat = astStats.biweightLocation(VFRAC,6.0),astStats.biweightScale(VFRAC,9.0)
+				mbias,mscat = astrostats.biweight_location(MFRAC,6.0),astrostats.biweight_midvariance(MFRAC,9.0)
+				vbias,vscat = astrostats.biweight_location(VFRAC,6.0),astrostats.biweight_midvariance(VFRAC,9.0)
 
 			return MFRAC,mbias,mscat,VFRAC,vbias,vscat
 	
@@ -431,14 +432,14 @@ class Work(Recover):
 			p1 = mp.axvline(truemass,ymin=.8,color='k',lw=1.5)
 			p2 = mp.axvline(np.median(caumass*1),ymin=.8,color='g',lw=1.5)
 			p3 = mp.axvline(np.mean(caumass*1),ymin=.8,color='c',lw=1.5)
-			p4 = mp.axvline(astStats.biweightLocation(caumass*1,6.0),ymin=.8,color='r',lw=1.5)
+			p4 = mp.axvline(astrostats.biweight_location(caumass*1,6.0),ymin=.8,color='r',lw=1.5)
 			mp.legend([p1,p2,p3,p4],["Table Mass","Median","Mean","biweightLocation"])
 		else:
 			ax.hist(caumass,bins=bins,color='b',alpha=.6)
 			p1 = ax.axvline(truemass,ymin=.8,color='k',lw=1.5)
 			p2 = ax.axvline(np.median(caumass*1),ymin=.8,color='g',lw=1.5)
 			p3 = ax.axvline(np.mean(caumass*1),ymin=.8,color='c',lw=1.5)
-			p4 = ax.axvline(astStats.biweightLocation(caumass*1,6.0),ymin=.8,color='r',lw=1.5)
+			p4 = ax.axvline(astrostats.biweight_location(caumass*1,6.0),ymin=.8,color='r',lw=1.5)
 			ax.legend([p1,p2,p3,p4],["Table Mass","Median","Mean","biweightLocation"],fontsize=8)
 
 
