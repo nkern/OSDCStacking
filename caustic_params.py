@@ -57,5 +57,5 @@ H0              = h*100.0                       # Hubble Constant, km s-1 Mpc-1
 
 # Other
 run_time        = time.asctime()                # Time when program was started
-root            = '/glusterfs/users1/caustics1/nkern'  # Root for OSDC
+root            = '/glusterfs/users/caustics1/nkern'  # Root for OSDC
 
