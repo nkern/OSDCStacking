@@ -22,7 +22,7 @@ cent_offset     = None                          # Either 'r', 'v', 'full', or No
 
 ### CONSTANTS ###
 # Run Dependent
-ens_num         = 1				# Number of Ensembles to build and solve for IN THIS RUN
+ens_num         = 2				# Number of Ensembles to build and solve for IN THIS RUN
 gal_num         = 50				# Number of galaxies taken per line of sight
 line_num        = 10				# Number of lines of sight to stack over
 method_num      = 0                             # Ensemble Build Method Number
