@@ -8,7 +8,6 @@ programs.
 from caustic_stack import *
 
 
-
 class Millennium(object):
 	"""
 	A class with functions designed to work with Millennium Simulation data
@@ -21,35 +20,57 @@ class Millennium(object):
 
 	def load_halos(self,new_coords='median'):
 		'''This function loads halo data and makes cosmology corrections'''
-		if self.small_set == True:
-			HaloID = np.loadtxt(self.root+'/Caustic/biglosclusters.csv', delimiter=',', dtype='string', usecols=(0,), unpack=True)
-			HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/Caustic/biglosclusters.csv', delimiter=',', dtype='float', usecols=(9,10,11,12,13,14), unpack=True)
-			SRAD,ESRAD,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/Caustic/Millbig_concentrations.phys_phys.csv', delimiter=',', dtype='float', usecols=(1,2,5,7,9,12), unpack=True)
-		else:
-			HaloID,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/Millennium/Large_Halo_Set/halos.csv',usecols=(0,8,9,10,11,12,13,16,5,7,4),delimiter=',',unpack=True)
+
+		if self.lightcone == True:
+			HaloID = np.loadtxt(self.root+'/OSDCStacking/centralsClusters2.csv',delimiter=',',usecols=(0,),unpack=True,dtype='str')
+			RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = np.loadtxt(self.root+'/OSDCStacking/centralsClusters2.csv',delimiter=',',usecols=(20,21,14,15,16,17,18,19,8,2,4,23,12),unpack=True)
 			M_crit200 *= 1e10
-			HaloID = np.array(HaloID,int)
-			SRAD,ESRAD=np.ones(HaloID.size),np.ones(HaloID.size)
-			if self.new_halo_cent == True:
-				if new_coords == 'mean':
-					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,1,2,3,4,5,6),unpack=True)
-				elif new_coords == 'median':
-					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,7,8,9,10,11,12),unpack=True)
-				else:
-					print 'Old Coordinates Used...'
-				HALOID = np.array(HALOID,int)
-				to_sort = np.array(map(lambda x: np.where(HALOID==x), HaloID)).ravel()
-				HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = HALOID[to_sort],HPX[to_sort],HPY[to_sort],HPZ[to_sort],HVX[to_sort],HVY[to_sort],HVZ[to_sort]
+			cut = []
+			duplicate = []
+			for i in range(len(HaloID)):
+				x = np.where(HaloID == HaloID[i])[0]
+				if len(x) == 1 and HaloID[i] not in duplicate:
+					cut.append(i)
+					continue
+				elif len(x) > 1 and HaloID[i] not in duplicate:
+					cut.append(i)
+					duplicate.append(HaloID[i])
+			cut = np.array(cut)
+			HaloID = HaloID[cut]	
+			RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = RA[cut],DEC[cut],HPX[cut],HPY[cut],HPZ[cut],HVX[cut],HVY[cut],HVZ[cut],R_crit200[cut],M_crit200[cut],HVD[cut],Z[cut],Clus_rmag[cut]	
+
+		else:
+			if self.small_set == True:
+				HaloID = np.loadtxt(self.root+'/Caustic/biglosclusters.csv', delimiter=',', dtype='string', usecols=(0,), unpack=True)
+				HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/Caustic/biglosclusters.csv', delimiter=',', dtype='float', usecols=(9,10,11,12,13,14), unpack=True)
+				SRAD,ESRAD,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/Caustic/Millbig_concentrations.phys_phys.csv', delimiter=',', dtype='float', usecols=(1,2,5,7,9,12), unpack=True)
+			else:
+				HaloID,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z = np.loadtxt(self.root+'/Millennium/Large_Halo_Set/halos.csv',usecols=(0,8,9,10,11,12,13,16,5,7,4),delimiter=',',unpack=True)
+				M_crit200 *= 1e10
+				HaloID = np.array(HaloID,int)
+				SRAD,ESRAD=np.ones(HaloID.size),np.ones(HaloID.size)
+				if self.new_halo_cent == True:
+					if new_coords == 'mean':
+						HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,1,2,3,4,5,6),unpack=True)
+					elif new_coords == 'median':
+						HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = np.loadtxt(self.root+'/OSDCStacking/new_halo_coords.csv',delimiter=',',usecols=(0,7,8,9,10,11,12),unpack=True)
+					else:
+						print 'Old Coordinates Used...'
+						raise NameError
+					HALOID = np.array(HALOID,int)
+					to_sort = np.array(map(lambda x: np.where(HALOID==x), HaloID)).ravel()
+					HALOID,HPX,HPY,HPZ,HVX,HVY,HVZ = HALOID[to_sort],HPX[to_sort],HPY[to_sort],HPZ[to_sort],HVX[to_sort],HVY[to_sort],HVZ[to_sort]
 
 		# Hubble Constant Coefficient
-		R_crit200,M_crit200,HPX,HPY,HPZ = R_crit200,M_crit200,HPX,HPY,HPZ
+		# R_crit200,M_crit200,HPX,HPY,HPZ = R_crit200,M_crit200,HPX,HPY,HPZ
 
 		# Cosmological Correction
 		for l in xrange(len(HaloID)):	
-			HPX[l],HPY[l],HPZ[l] = HPX[l]/(1+Z[l]),HPY[l]/(1+Z[l]),HPZ[l]/(1+Z[l])	
-			# Fix weird SRAD values, if R_crit200/SRAD = Conc > 2, set SRAD=R_crit200/2
-			if R_crit200[l]/SRAD[l] < 2.0:
-				SRAD[l] = R_crit200[l] / 2.0
+			HPX[l],HPY[l],HPZ[l] = HPX[l]/(1+Z[l]),HPY[l]/(1+Z[l]),HPZ[l]/(1+Z[l])
+			if self.lightcone == False:
+				# Fix weird SRAD values, if R_crit200/SRAD = Conc > 2, set SRAD=R_crit200/2
+				if R_crit200[l]/SRAD[l] < 2.0:
+					SRAD[l] = R_crit200[l] / 2.0
 		#Ordering of halos in arrays is identical to biglosclusters' inherent ordering.
 			
 		return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
@@ -170,7 +191,6 @@ class Millennium(object):
 		for m in range(weight):
                 	# Append to PS
                 	PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
-
 
 
 	def mass_mixing(self,HaloID,HaloData,mass_scat):
