@@ -119,7 +119,7 @@ class Millennium(object):
 
 		# load galaxy data
 		if lightcone == True:
-			gal_id = np.loadtxt(str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
+			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
 			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
 
 		else:
