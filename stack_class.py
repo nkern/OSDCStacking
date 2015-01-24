@@ -118,16 +118,20 @@ class Millennium(object):
 		m_crit200,r_crit200,hvd,z,hpx,hpy,hpz,hvx,hvy,hvz = halodata
 
 		# load galaxy data
-		if self.small_set == True:
-			# 100 Halo Sample	
-			f = fits.open(self.root+'/giffordw/Millenium/30Mpchalos/'+haloid+'.'+self.data_set+'.fits')
-			data = f[1].data
-			gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(13),data.field(17),data.field(18),data.field(19),data.field(20),data.field(21),data.field(22),data.field(62),data.field(63),data.field(64)
-		else:
-			# 2,000 Halo Sample
-			data = fits.getdata(self.root+'/Millennium/Large_Halo_Set/Halo_'+str(haloid)+'.Guo2010.fits')
+		if lightcone == True:
+			gal_id = np.loadtxt(str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
 
-			gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(3),data.field(6),data.field(7),data.field(8),data.field(9),data.field(10),data.field(11),data.field(14),data.field(15),data.field(16)
+		else:
+			if self.small_set == True:
+				# 100 Halo Sample	
+				f = fits.open(self.root+'/giffordw/Millenium/30Mpchalos/'+haloid+'.'+self.data_set+'.fits')
+				data = f[1].data
+				gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(13),data.field(17),data.field(18),data.field(19),data.field(20),data.field(21),data.field(22),data.field(62),data.field(63),data.field(64)
+			else:
+				# 2,000 Halo Sample
+				data = fits.getdata(self.root+'/Millennium/Large_Halo_Set/Halo_'+str(haloid)+'.Guo2010.fits')
+				gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = data.field(3),data.field(6),data.field(7),data.field(8),data.field(9),data.field(10),data.field(11),data.field(14),data.field(15),data.field(16)
 
 		# Cosmology corrections
 		gpx,gpy,gpz = (gpx/(1+z)),(gpy/(1+z)),(gpz/(1+z))
