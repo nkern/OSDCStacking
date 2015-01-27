@@ -32,6 +32,7 @@ data_loc        = None				# Alternative data_loc, either None or String
 write_loc       = None				# Alternative write_loc, either None or String
 
 # Other Techniques
+mm_est		= None				# "Mass Mix Estimator" - What scaling technique to get mass scatter? 'richness', 'vel_disp', 'luminosity', 
 edge_perc	= 0.1				# Fractional percent of Top galaxies used in edge detection technique
 mass_scat       = None				# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
 center_scat     = None                          # If guessing halo center, fractional induced scatter into known center

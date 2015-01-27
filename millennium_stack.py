@@ -3,6 +3,7 @@
 This program uses the Caustic Technique to estimate the masses of galaxy clusters,
 after having applied a stacking technique to create ensemble clusters.
 This script does strictly self stacking or bin stacking.
+
 """
 
 ###################### BEGIN STANDARD PREAMBLE #####################

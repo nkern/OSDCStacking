@@ -71,12 +71,15 @@ class Millennium(object):
 				# Fix weird SRAD values, if R_crit200/SRAD = Conc > 2, set SRAD=R_crit200/2
 				if R_crit200[l]/SRAD[l] < 2.0:
 					SRAD[l] = R_crit200[l] / 2.0
-		#Ordering of halos in arrays is identical to biglosclusters' inherent ordering.
-			
-		return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
+
+		# Ordering of halos in arrays is identical to biglosclusters' inherent ordering.
+		if self.lightcone == True:
+			return HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,Z,HPX,HPY,HPZ,HVX,HVY,HVZ])
+		else:
+			return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
 
 
-	def sort_halos(self,HaloID,HaloData):
+	def sort_halos(self,HaloID,HaloData,RA=None,DEC=None):
 		''' Sort Halo Data by some Criteria '''
 		# Unpack Array HaloData into local namespace for easier use and clarity
 		M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData	
@@ -93,8 +96,15 @@ class Millennium(object):
 		HVX = HVX[sort]
 		HVY = HVY[sort]
 		HVZ = HVZ[sort]
+		if self.lightcone == True:
+			RA = RA[sort]
+			DEC = DEC[sort]
+
 		# Return packed array
-		return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ]) 
+		if self.lightcone == True:
+			return HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ]) 
+		else:
+			return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ]) 
 
 
 	def configure_galaxies(self,HaloID,HaloData):
@@ -105,11 +115,17 @@ class Millennium(object):
 		galdata = self.load_galaxies(HaloID,HaloData,R_crit200)
 
 		# unpack array galdata into namespace
-		gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata	
+		if self.lightcone == True:
+			gal_ra,gal_dec,gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata
+		else:
+			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata	
 		gal_p	= np.array([gpx,gpy,gpz],float)
 		gal_v	= np.array([gvx,gvy,gvz],float)
-	
-		return gal_p,gal_v,gmags,rmags,imags
+
+		if self.lightcone == True:
+			return gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v
+		else:	
+			return gal_p,gal_v,gmags,rmags,imags
 
 
 	def load_galaxies(self,haloid,halodata,r_crit200):
@@ -119,7 +135,7 @@ class Millennium(object):
 
 		# load galaxy data
 		if lightcone == True:
-			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
+			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
 			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
 
 		else:
@@ -140,7 +156,7 @@ class Millennium(object):
 		gmags,rmags,imags = np.array(gmags,float),np.array(rmags,float),np.array(imags,float)
 
 		# remove BCG from sample
-		BCG = np.where((gpx != hpx)&(gpy != hpy)&(gpz != hpz))
+		BCG = np.where((gpx != hpx)&(gpy != hpy)&(gpz != hpz))[0]
 		gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags = gpx[BCG], gpy[BCG], gpz[BCG], gvx[BCG], gvy[BCG], gvz[BCG], gmags[BCG], rmags[BCG], imags[BCG]
 
 		# Cut down to only members if desired
@@ -149,7 +165,10 @@ class Millennium(object):
 			cut = np.where(gpr < r_crit200)
 			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = gpx[cut],gpy[cut],gpz[cut],gvx[cut],gvy[cut],gvz[cut],gmags[cut],rmags[cut],imags[cut]
 
-		return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
+		if self.lightcone == True
+			return np.vstack([ gal_ra, gal_dec, gal_z, gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
+		else:
+			return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 
 
 	def load_project_append(self,HaloID,M200,R200,HVD,Z,Halo_P,Halo_V,PS):
@@ -157,18 +176,27 @@ class Millennium(object):
 		This function loads galaxy data then projects it, discarding the galaxy data after using it to save memory
 		"""
 
-		# Load Galaxies
-		Gal_P,Gal_V,G_Mags,R_Mags,I_Mags = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+		if self.lightcone == True:
+                        # Load Galaxies
+			Gal_RA,Gal_DEC,Gal_Z,G_Mags,R_Mags,I_Mags,Gal_P,Gal_V = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
 
-		# Do Projection
-		r, v, pro_pos = self.U.line_of_sight(Gal_P,Gal_V,Halo_P,Halo_V,project=False)
+			# Get angles
 
-		r = np.array(r)
-		v = np.array(v)
-		pro_pos = np.array(pro_pos)
-		G_Mags = np.array(G_Mags)
-		R_Mags = np.array(R_Mags)
-		I_Mags = np.array(I_Mags)
+
+
+
+		else:
+                        # Load Galaxies
+			Gal_P,Gal_V,G_Mags,R_Mags,I_Mags = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+
+			# Do Projection
+			r, v, pro_pos = self.U.line_of_sight(Gal_P,Gal_V,Halo_P,Halo_V)
+			r = np.array(r)
+			v = np.array(v)
+			pro_pos = np.array(pro_pos)
+			G_Mags = np.array(G_Mags)
+			R_Mags = np.array(R_Mags)
+			I_Mags = np.array(I_Mags)
 
 		# Append to PS
 		PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
@@ -180,7 +208,10 @@ class Millennium(object):
                 """
 
                 # Load Galaxies
-                Gal_P,Gal_V,G_Mags,R_Mags,I_Mags = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+		if self.lightcone == True:
+			Gal_RA,Gal_DEC,Gal_Z,G_Mags,R_Mags,I_Mags,Gal_P,Gal_V = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+		else:
+                	Gal_P,Gal_V,G_Mags,R_Mags,I_Mags = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
 
                 # Do Projection
                 r, v, pro_pos = self.U.line_of_sight(Gal_P,Gal_V,Halo_P,Halo_V,project=False)

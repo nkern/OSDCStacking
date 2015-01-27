@@ -49,7 +49,7 @@ if bootstrap == True:
 	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
 
 ## Make dictionary for loaded constants, doesn't matter if some don't exist
-keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_clean','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror','edge_perc','lightcone']
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_clean','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror','edge_perc','lightcone','mm_est']
 varib = ez.create(keys,locals())
 varib.update({'_name_':'varib'})
 
@@ -64,40 +64,64 @@ U.print_varibs(names,varib)
 
 ## Load Halo Data
 U.print_separation('# ...Loading Halos',type=1)
-HaloID,HaloData = M.load_halos()
+if lightcone == True:
+	HaloID,RA,DEC,HaloData = M.load_halos()
+else:
+	HaloID,HaloData = M.load_halos()
 
 # Sort Halos by A Priori Known Descending Mass (Mass Critical 200)
-HaloID,HaloData = M.sort_halos(HaloID,HaloData)
+if lightcone == True:
+	HaloID,RA,DEC,HaloData = M.sort_halos(HaloID,HaloData)
+else:
+	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 
 ############### END STANDARD PREAMBLE ######################
-# Mass Mix if applicable
-if mass_mix == True:
-	HaloID_init,HaloData_init = np.copy(HaloID),np.copy(HaloData)
+
+# Load in Halo Data from previously written file, or write file if doesn't exist
+try:
+	f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','rb')
+	input = pkl.Unpickler(f)	
+	run_dict = input.load()
+	globals().update(run_dict)
+	f.close()
+except IOError:
 	try:
-		""" Need to create 1 mass mixed array that every job loads in to preserve consistency"""
-		# Mass Mix arrays
-		HaloID,HaloData,massmix_sort = M.mass_mixing(HaloID,HaloData,float(mass_scat))
-
-		# Create Assumed and True BinData, former sorted by mixed mass, latter sorted by table mass
-		BinData = U.Bin_Calc(HaloData[0][:halo_num],HaloData[1][:halo_num],HaloData[3][:halo_num])
-		TrueBinData = U.Bin_Calc(HaloData_init[0][:halo_num],HaloData_init[1][:halo_num],HaloData_init[3][:halo_num])
-
-		# Dump Data in to halo_arrays.pkl
-		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')
-		output = pkl.Pickler(f)
-		data = {'massmix_sort':massmix_sort,'HaloID':HaloID,'HaloData':HaloData,'HaloID_init':HaloID_init,'HaloData_init':HaloData_init,'BinData':BinData,'TrueBinData':TrueBinData}
-		output.dump(data)
+		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')	
+		output = pkl.Pickler(f)	
+		if lightcone == True:
+			run_dict = {'HaloID':HaloID,'RA':RA,'DEC':DEC,'HaloData':HaloData}
+		else:
+			run_dict = {'HaloID':HaloID,'HaloData':HaloData}
+		output.dump(run_dict)
 		f.close()
-
 	except IOError:
-		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','rb')
-		input = pkl.Unpickler(f)
-		globals().update(input.load())
+		pass
 
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
-HaloData = M_crit200,R_crit200,HVD
 Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
+
+###############Outdated Mass Mixing Technique##################
+#if mass_mix == True:
+#	HaloID_init,HaloData_init = np.copy(HaloID),np.copy(HaloData)
+#	try:
+#		""" Need to create 1 mass mixed array that every job loads in to preserve consistency"""
+#		# Mass Mix arrays
+#		HaloID,HaloData,massmix_sort = M.mass_mixing(HaloID,HaloData,float(mass_scat))
+#		# Create Assumed and True BinData, former sorted by mixed mass, latter sorted by table mass
+#		BinData = U.Bin_Calc(HaloData[0][:halo_num],HaloData[1][:halo_num],HaloData[3][:halo_num])
+#		TrueBinData = U.Bin_Calc(HaloData_init[0][:halo_num],HaloData_init[1][:halo_num],HaloData_init[3][:halo_num])
+#		# Dump Data in to halo_arrays.pkl
+#		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')
+#		output = pkl.Pickler(f)
+#		data = {'massmix_sort':massmix_sort,'HaloID':HaloID,'HaloData':HaloData,'HaloID_init':HaloID_init,'HaloData_init':HaloData_init,'BinData':BinData,'TrueBinData':TrueBinData}
+#		output.dump(data)
+#		f.close()
+#	except IOError:
+#		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','rb')
+#		input = pkl.Unpickler(f)
+#		globals().update(input.load())
+################################################################
 
 # Initialize Multi-Ensemble Array to hold resultant data
 STACK_DATA = []
