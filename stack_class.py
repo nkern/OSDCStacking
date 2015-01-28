@@ -167,37 +167,55 @@ class Millennium(object):
 			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = gpx[cut],gpy[cut],gpz[cut],gvx[cut],gvy[cut],gvz[cut],gmags[cut],rmags[cut],imags[cut]
 
 		if self.lightcone == True:
+			print len(gal_ra)
+			print len(gal_dec)
+			print len(gal_z)
+			print len(gpx)
+			print len(gmags)
 			return np.vstack([ gal_ra, gal_dec, gal_z, gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 		else:
 			return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 
 
-	def load_project_append(self,HaloID,M200,R200,HVD,Z,Halo_P,Halo_V,PS):
+	def load_project_append(self,haloid,m200,r200,hvd,z,halo_p,halo_v,PS):
 		"""
 		This function loads galaxy data then projects it, discarding the galaxy data after using it to save memory
 		"""
 
 		if self.lightcone == True:
                         # Load Galaxies
-			Gal_RA,Gal_DEC,Gal_Z,G_Mags,R_Mags,I_Mags,Gal_P,Gal_V = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+			gal_ra,gal_dec,gal_z,g_mags,r_mags,i_mags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
-			# Get angles
+			# Get angles and phase spaces
+			ang_d,lum_d = S.C.zdistance(clus_z,self.H0)
+			angles = S.C.findangle(gal_ra,gal_dec,clus_ra,clus_dec)
+			rdata = angles * ang_d
+			vdata = self.c * (gal_z - clus_z) / clus_z
 
+			# Do Mass Mixing if Applicable	
+			if self.mass_mix == True:
+				if self.mm_est == 'richness':
+					pass
 
+				elif self.mm_est == 'vel_disp':
+					pass
 
+				elif self.mm_est == 'luminosity':
+					pass
+
+				else:
+					print 'No match for mm_est'
+					raise NameError
 
 		else:
                         # Load Galaxies
-			Gal_P,Gal_V,G_Mags,R_Mags,I_Mags = self.configure_galaxies(HaloID,np.array([M200,R200,HVD,Z,Halo_P[0],Halo_P[1],Halo_P[2],Halo_V[0],Halo_V[1],Halo_V[2]]))
+			gal_p,gal_v,g_mags,r_mags,i_mags = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
-			# Do Projection
-			r, v, pro_pos = self.U.line_of_sight(Gal_P,Gal_V,Halo_P,Halo_V)
-			r = np.array(r)
-			v = np.array(v)
+			# Do Projection, get phase spaces
+			rdata, vdata, pro_pos = self.U.line_of_sight(gal_p,gal_v,halo_p,halo_v)
+			rdata = np.array(rdata)
+			vdata = np.array(vdata)
 			pro_pos = np.array(pro_pos)
-			G_Mags = np.array(G_Mags)
-			R_Mags = np.array(R_Mags)
-			I_Mags = np.array(I_Mags)
 
 			# Do Mass Mixing if Applicable	
 			if self.mass_mix == True:
@@ -216,7 +234,7 @@ class Millennium(object):
 		
 
 		# Append to PS
-		PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
+		PS.append( {'Rdata':rdata,'Vdata':vdata,'pro_pos':np.array(pro_pos),'G_Mags':g_mags,'R_Mags':r_mags,'I_Mags':i_mags,'HaloID':haloid,'M200':m200,'R200':r200,'HVD':hvd} )
 
 
         def load_project_append_bootstrap(self,HaloID,M200,R200,HVD,Z,Halo_P,Halo_V,PS,weight):
