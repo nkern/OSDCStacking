@@ -59,7 +59,7 @@ U = Universal(varib)
 M = Millennium(varib)
 
 U.print_separation('## Running millennium_massmix.py')
-names = ['run_time','','run_num','gal_num','line_num','cell_num','ens_num','halo_num','method_num','avg_meth','','self_stack','lightcone','mass_mix','write_data','scale_data','run_los','mirror','new_halo_cent','cent_offset','true_mems','init_clean','bootstrap','','mass_scat','center_scat','bootstrap_num','bootstrap_rep','','data_loc','write_loc','root']
+names = ['run_time','','run_num','gal_num','line_num','cell_num','ens_num','halo_num','method_num','avg_meth','','self_stack','lightcone','mass_mix','mm_est','write_data','scale_data','run_los','mirror','new_halo_cent','cent_offset','true_mems','init_clean','bootstrap','','mass_scat','center_scat','bootstrap_num','bootstrap_rep','','data_loc','write_loc','root']
 U.print_varibs(names,varib)
 
 ## Load Halo Data
@@ -71,6 +71,10 @@ else:
 
 # Sort Halos by A Priori Known Descending Mass (Mass Critical 200)
 if lightcone == True:
+	HaloID,RA,DEC,HaloData = M.sort_halos(HaloID,HaloData)
+else:
+	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
+
 	HaloID,RA,DEC,HaloData = M.sort_halos(HaloID,HaloData)
 else:
 	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
@@ -122,6 +126,8 @@ Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
 #		input = pkl.Unpickler(f)
 #		globals().update(input.load())
 ################################################################
+
+## Create Mass Mixing Functions and assign to "Stack" class
 
 # Initialize Multi-Ensemble Array to hold resultant data
 STACK_DATA = []

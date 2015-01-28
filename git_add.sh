@@ -20,7 +20,7 @@ git add table_rerun.sh
 git add table_run_pbs.sh
 git add table_run.sh
 git add git_add.sh
-
+git add calc_kcor.py
 
 
 

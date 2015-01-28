@@ -6,7 +6,7 @@ programs.
 """
 
 from caustic_stack import *
-
+from calc_kcor import calc_kcor
 
 class Millennium(object):
 	"""
@@ -74,7 +74,7 @@ class Millennium(object):
 
 		# Ordering of halos in arrays is identical to biglosclusters' inherent ordering.
 		if self.lightcone == True:
-			return HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,Z,HPX,HPY,HPZ,HVX,HVY,HVZ])
+			return HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
 		else:
 			return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
 
@@ -119,6 +119,7 @@ class Millennium(object):
 			gal_ra,gal_dec,gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata
 		else:
 			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata	
+
 		gal_p	= np.array([gpx,gpy,gpz],float)
 		gal_v	= np.array([gvx,gvy,gvz],float)
 
@@ -134,7 +135,7 @@ class Millennium(object):
 		m_crit200,r_crit200,hvd,z,hpx,hpy,hpz,hvx,hvy,hvz = halodata
 
 		# load galaxy data
-		if lightcone == True:
+		if self.lightcone == True:
 			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
 			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
 
@@ -165,7 +166,7 @@ class Millennium(object):
 			cut = np.where(gpr < r_crit200)
 			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = gpx[cut],gpy[cut],gpz[cut],gvx[cut],gvy[cut],gvz[cut],gmags[cut],rmags[cut],imags[cut]
 
-		if self.lightcone == True
+		if self.lightcone == True:
 			return np.vstack([ gal_ra, gal_dec, gal_z, gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 		else:
 			return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
@@ -198,6 +199,22 @@ class Millennium(object):
 			R_Mags = np.array(R_Mags)
 			I_Mags = np.array(I_Mags)
 
+			# Do Mass Mixing if Applicable	
+			if self.mass_mix == True:
+				if self.mm_est == 'richness':
+					pass
+
+				elif self.mm_est == 'vel_disp':
+					pass
+
+				elif self.mm_est == 'luminosity':
+					pass
+
+				else:
+					print 'No match for mm_est'
+					raise NameError
+		
+
 		# Append to PS
 		PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
 
@@ -228,41 +245,61 @@ class Millennium(object):
                 	PS.append( {'Rdata':r,'Vdata':v,'pro_pos':np.array(pro_pos),'G_Mags':G_Mags,'R_Mags':R_Mags,'I_Mags':I_Mags,'HaloID':HaloID,'M200':M200,'R200':R200,'HVD':HVD} )
 
 
-	def mass_mixing(self,HaloID,HaloData,mass_scat):
-		'''
-		This function performs a mass mixing procedure with a given fractional scatter in assumed mass
-		'''
+#	Outdated Mass Mixing Routine
+#	def mass_mixing(self,HaloID,HaloData,mass_scat):
+#		'''
+#		This function performs a mass mixing procedure with a given fractional scatter in assumed mass
+#		'''
+#		# Unpack Array
+#		M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
+#		# Create lognormal distribution about 1 with width mass_scat, length HaloID.size
+#		mass_mix = npr.lognormal(0,mass_scat,len(HaloID))
+#		# Apply Mass Scatter
+#		M_crit200 *= mass_mix
+#		# Create M200_match array
+#		M_crit200_match = np.copy(M_crit200)
+#		# Sort by Descending Mass
+#		sort = np.argsort(M_crit200)[::-1]
+#		M_crit200 = M_crit200[sort]
+#		R_crit200 = R_crit200[sort]
+#		Z = Z[sort]
+#		HVD = HVD[sort]
+#		HPX = HPX[sort]
+#		HPY = HPY[sort]
+#		HPZ = HPZ[sort]
+#		HVX = HVX[sort]
+#		HVY = HVY[sort]
+#		HVZ = HVZ[sort]
+#		HaloID = HaloID[sort]
+#		# Re-pack
+#		HaloData = np.array([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
+#		return HaloID,HaloData,sort
 
-		# Unpack Array
-		M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
-		
-		# Create lognormal distribution about 1 with width mass_scat, length HaloID.size
-		mass_mix = npr.lognormal(0,mass_scat,len(HaloID))
 
-		# Apply Mass Scatter
-		M_crit200 *= mass_mix
+	def richness_mass_mixing(self,*args,**kwargs):
+		''' Richness estimator combined with mass scatter calculation for millennium galaxy clusters'''
+		pass
 
-		# Create M200_match array
-		M_crit200_match = np.copy(M_crit200)
-	
-		# Sort by Descending Mass
-		sort = np.argsort(M_crit200)[::-1]
-		M_crit200 = M_crit200[sort]
-		R_crit200 = R_crit200[sort]
-		Z = Z[sort]
-		HVD = HVD[sort]
-		HPX = HPX[sort]
-		HPY = HPY[sort]
-		HPZ = HPZ[sort]
-		HVX = HVX[sort]
-		HVY = HVY[sort]
-		HVZ = HVZ[sort]
-		HaloID = HaloID[sort]
 
-		# Re-pack
-		HaloData = np.array([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
 
-		return HaloID,HaloData,sort
+
+
+
+	def vel_disp_mass_mixing(self,*args,**kwargs):
+		''' Velocity Dispersion estimator combined with mass scatter calculation for millennium galaxy clusters '''
+		pass
+
+	def luminosity_mass_mixing(self,*args,**kwargs):
+		''' Galaxy Luminosity estimator combined with mass scatter calculation for millennium galaxy clusters '''
+		pass
+
+
+
+
+
+
+
+
 
 
 

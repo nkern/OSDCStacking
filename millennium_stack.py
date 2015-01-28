@@ -49,7 +49,7 @@ if bootstrap == True:
 	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
 
 ## Make dictionary for loaded constants, doesn't matter if some don't exist
-keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_clean','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror','edge_perc','lightcone']
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_clean','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror','edge_perc','lightcone','mm_est']
 varib = ez.create(keys,locals())
 varib.update({'_name_':'varib'})
 
@@ -64,10 +64,16 @@ U.print_varibs(names,varib)
 
 ## Load Halo Data
 U.print_separation('# ...Loading Halos',type=1)
-HaloID,HaloData = M.load_halos()
+if lightcone == True:
+	HaloID,RA,DEC,HaloData = M.load_halos()
+else:
+	HaloID,HaloData = M.load_halos()
 
 # Sort Halos by A Priori Known Descending Mass (Mass Critical 200)
-HaloID,HaloData = M.sort_halos(HaloID,HaloData)
+if lightcone == True:
+	HaloID,RA,DEC,HaloData = M.sort_halos(HaloID,HaloData,RA=RA,DEC=DEC)
+else:
+	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 
 ####################### END STANDARD PREAMBLE ##############################
 
@@ -82,7 +88,10 @@ except IOError:
 	try:
 		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')	
 		output = pkl.Pickler(f)
-		run_dict = {'HaloID':HaloID,'HaloData':HaloData}
+		if lightcone == True:
+			run_dict = {'HaloID':HaloID,'RA':RA,'DEC':DEC,'HaloData':HaloData}
+		else:
+			run_dict = {'HaloID':HaloID,'HaloData':HaloData}
 		output.dump(run_dict)
 		f.close()
 	except IOError:
@@ -90,9 +99,9 @@ except IOError:
 
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
-HaloData = M_crit200,R_crit200,HVD
 Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
 
+raise NameError
 # Initialize Multi-Ensemble Array to hold resultant data
 STACK_DATA = []
 
