@@ -129,10 +129,16 @@ for j in range(ens_num):
 
 		# Load galaxy data, project it, then append to PS
 		if self_stack == True:
-			M.load_project_append(HaloID[stack_range][j],M_crit200[stack_range][j],R_crit200[stack_range][j],HVD[stack_range][j],Z[stack_range][j],Halo_P[stack_range][j],Halo_V[stack_range][j],PS)
+			if lightcone == True:
+				M.load_project_append(HaloID[stack_range][j],M_crit200[stack_range][j],R_crit200[stack_range][j],HVD[stack_range][j],Z[stack_range][j],Halo_P[stack_range][j],Halo_V[stack_range][j],PS,clus_ra=RA[stack_range][j],clus_dec=[stack_range][j])
+			else:
+				M.load_project_append(HaloID[stack_range][j],M_crit200[stack_range][j],R_crit200[stack_range][j],HVD[stack_range][j],Z[stack_range][j],Halo_P[stack_range][j],Halo_V[stack_range][j],PS)
 
 		else:
-			M.load_project_append(HaloID[stack_range][j*line_num:(j+1)*line_num][l],M_crit200[stack_range][j*line_num:(j+1)*line_num][l],R_crit200[stack_range][j*line_num:(j+1)*line_num][l],HVD[stack_range][j*line_num:(j+1)*line_num][l],Z[stack_range][j*line_num:(j+1)*line_num][l],Halo_P[stack_range][j*line_num:(j+1)*line_num][l],Halo_V[stack_range][j*line_num:(j+1)*line_num][l],PS)
+			if lightcone == True:
+				M.load_project_append(HaloID[stack_range][j*line_num:(j+1)*line_num][l],M_crit200[stack_range][j*line_num:(j+1)*line_num][l],R_crit200[stack_range][j*line_num:(j+1)*line_num][l],HVD[stack_range][j*line_num:(j+1)*line_num][l],Z[stack_range][j*line_num:(j+1)*line_num][l],Halo_P[stack_range][j*line_num:(j+1)*line_num][l],Halo_V[stack_range][j*line_num:(j+1)*line_num][l],PS,clus_ra=RA[stack_range][j*line_num:(j+1)*line_num][l],clus_dec=DEC[stack_range][j*line_num:(j+1)*line_num][l])
+			else:
+				M.load_project_append(HaloID[stack_range][j*line_num:(j+1)*line_num][l],M_crit200[stack_range][j*line_num:(j+1)*line_num][l],R_crit200[stack_range][j*line_num:(j+1)*line_num][l],HVD[stack_range][j*line_num:(j+1)*line_num][l],Z[stack_range][j*line_num:(j+1)*line_num][l],Halo_P[stack_range][j*line_num:(j+1)*line_num][l],Halo_V[stack_range][j*line_num:(j+1)*line_num][l],PS)
 
 
 	PS.to_array(['Rdata','Vdata','HaloID','M200','R200','HVD','G_mags','R_Mags','I_Mags'])

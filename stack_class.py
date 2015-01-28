@@ -23,7 +23,7 @@ class Millennium(object):
 
 		if self.lightcone == True:
 			HaloID = np.loadtxt(self.root+'/OSDCStacking/centralsClusters2.csv',delimiter=',',usecols=(0,),unpack=True,dtype='str')
-			RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = np.loadtxt(self.root+'/OSDCStacking/centralsClusters2.csv',delimiter=',',usecols=(20,21,14,15,16,17,18,19,8,2,4,23,12),unpack=True)
+			RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = np.loadtxt(self.root+'/OSDCStacking/centralsClusters2.csv',delimiter=',',usecols=(20,21,14,15,16,17,18,19,8,2,4,22,12),unpack=True)
 			M_crit200 *= 1e10
 			cut = []
 			duplicate = []
@@ -107,12 +107,12 @@ class Millennium(object):
 			return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ]) 
 
 
-	def configure_galaxies(self,HaloID,HaloData):
+	def configure_galaxies(self,haloid,halodata):
 		''' Loads galaxy data from halo list, and converts to physical coordinates and corrects cosmological factors '''
 		# Unpack Array HaloData into local namespace for easier use and clarity
-		M_crit200,R_crit200,HVD,Z,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
+		m_crit200,r_crit200,hvd,z,hpx,hpy,hpz,hvx,hvy,hvz = halodata
 
-		galdata = self.load_galaxies(HaloID,HaloData,R_crit200)
+		galdata = self.load_galaxies(haloid,halodata,r_crit200)
 
 		# unpack array galdata into namespace
 		if self.lightcone == True:
@@ -167,17 +167,12 @@ class Millennium(object):
 			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = gpx[cut],gpy[cut],gpz[cut],gvx[cut],gvy[cut],gvz[cut],gmags[cut],rmags[cut],imags[cut]
 
 		if self.lightcone == True:
-			print len(gal_ra)
-			print len(gal_dec)
-			print len(gal_z)
-			print len(gpx)
-			print len(gmags)
 			return np.vstack([ gal_ra, gal_dec, gal_z, gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 		else:
 			return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 
 
-	def load_project_append(self,haloid,m200,r200,hvd,z,halo_p,halo_v,PS):
+	def load_project_append(self,haloid,m200,r200,hvd,clus_z,halo_p,halo_v,PS,clus_ra=None,clus_dec=None):
 		"""
 		This function loads galaxy data then projects it, discarding the galaxy data after using it to save memory
 		"""
@@ -297,10 +292,6 @@ class Millennium(object):
 	def richness_mass_mixing(self,*args,**kwargs):
 		''' Richness estimator combined with mass scatter calculation for millennium galaxy clusters'''
 		pass
-
-
-
-
 
 
 	def vel_disp_mass_mixing(self,*args,**kwargs):
