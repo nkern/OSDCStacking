@@ -292,10 +292,10 @@ class Millennium(object):
 #		return HaloID,HaloData,sort
 
 
-	def richness_mass_mixing(self,*args,**kwargs):
+	def richness_mass_mixing(self,rdata,vdata,gmags,rmags,imags):
 		''' Richness estimator combined with mass scatter calculation for millennium galaxy clusters'''
 		# Rough Cut at > 3 Mpc and +/- 5000 km/s
-		cut = np.where((rdata < 7) & (vdata < 5000)&(vdata > -5000))[0]
+		cut = np.where((rdata < 7) & (np.abs(vdata) < 5000))[0]
 		rdata = rdata[cut]
 		vdata = vdata[cut]
 		gmags = gmags[cut]
@@ -303,21 +303,34 @@ class Millennium(object):
 		imags = imags[cut]
 
 		# Shiftgapper for Interlopers
-		clus_data = np.vstack([rdata,vdata,gmags,rmags,imags])
-		clus_data = self.C.shiftgapper(clus_data.T).T
-		rdata,vdata,gmags,rmags,imags = clus_data
+		#clus_data = np.vstack([rdata,vdata,gmags,rmags,imags])
+		#clus_data = self.C.shiftgapper(clus_data.T).T
+		#rdata,vdata,gmags,rmags,imags = clus_data
 
 		# Measure Velocity Dispersion of all galaxies within 3 Mpc
 		vel_disp = astats.biweight_midvariance(vdata[np.where(rdata<3)])
 
 		# Take rough virial radius measurement
-		r_vir = np.exp(-1.86)*len(np.where((rmags < -19.55) & (rdata < 0.5) & (np.abs(vdata) < 3500))[0])**0.51
+		r_vir = np.exp(-1.86)*len(np.where((rmags < -19.55) & (rdata < 1.0) & (np.abs(vdata) < 3500))[0])**0.51
 
+		# Find color of Red Sequence, measured as SDSS_g-SDSS_r vs. SDSS_r absolute magnitude
+		color_data = gmags-rmags
+		color_cut = np.where(color_data > np.mean(gmags-rmags))[0]
+		size = len(color_cut)
+		hist1 = mp.hist(color_data[color_cut],bins=size/25.,normed=True,histtype='step')
+		hist2 = mp.hist(color_data[color_cut],bins=size/30.,normed=True,histtype='step')
+		hist3 = mp.hist(color_data[color_cut],bins=size/35.,normed=True,histtype='step')
+		mp.close()
+		RS_color = np.mean([hist1[1][np.where(hist1[0]==hist1[0].max())][0],hist2[1][np.where(hist2[0]==hist2[0].max())][0],hist3[1][np.where(hist3[0]==hist3[0].max())][0]])
+		RS_sigma = astats.biweight_midvariance(color_data)
+	
 		# Measure Sweet-Spot Richness
 		# Sweet Spot Calculation when:
 		# v_disp*2 < vdata < v_disp*3, r < r_virial, all colors, rmag_absolute < -19.0
-		SS_richness = len(np.where((vdata < vel_disp*3)&(vdata > vel_disp*2)&(rdata < r_virial)&(rmags_abs < -19.0))[0])
-	
+		SS_richness = len(np.where((np.abs(vdata) < vel_disp*2)&(np.abs(vdata) > vel_disp*1)&(rdata <= r_vir)&(rmags < -19.0))[0])
+		background = len(np.where((np.abs(vdata) < vel_disp*3)&(np.abs(vdata) > vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*3)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma))&(rmags<-19))[0])
+
+		return SS_richness - background
 	
 	def vel_disp_mass_mixing(self,*args,**kwargs):
 		''' Velocity Dispersion estimator combined with mass scatter calculation for millennium galaxy clusters '''
