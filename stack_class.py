@@ -123,7 +123,7 @@ class Millennium(object):
 		gal_v	= np.array([gvx,gvy,gvz],float)
 
 		if self.lightcone == True:
-			return gal_ra,gal_dec,gal_z,gmags,rmags,imags,abs_gmags,abs_rmags,abs_imags,gal_p,gal_v
+			return gal_ra,gal_dec,gal_z,abs_gmags,abs_rmags,abs_imags,gal_p,gal_v
 		else:	
 			return gal_p,gal_v,gmags,rmags,imags
 
@@ -181,7 +181,7 @@ class Millennium(object):
 
 		if self.lightcone == True:
                         # Load Galaxies
-			gal_ra,gal_dec,gal_z,gmags,rmags,imags,abs_gmags,abs_rmags,abs_imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Get angles and phase spaces
 			ang_d,lum_d = S.C.zdistance(clus_z,self.H0)
@@ -308,7 +308,10 @@ class Millennium(object):
 		rdata,vdata,gmags,rmags,imags = clus_data
 
 		# Measure Velocity Dispersion of all galaxies within 3 Mpc
-		vel_disp = astats.biweight_location(vdata[np.where(rdata<3)])
+		vel_disp = astats.biweight_midvariance(vdata[np.where(rdata<3)])
+
+		# Take rough virial radius measurement
+		r_vir = np.exp(-1.86)*len(np.where((rmags < -19.55) & (rdata < 0.5) & (np.abs(vdata) < 3500))[0])**0.51
 
 		# Measure Sweet-Spot Richness
 		# Sweet Spot Calculation when:
