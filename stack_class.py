@@ -181,7 +181,7 @@ class Millennium(object):
 
 		if self.lightcone == True:
                         # Load Galaxies
-			gal_ra,gal_dec,gal_z,g_mags,r_mags,i_mags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Get angles and phase spaces
 			ang_d,lum_d = S.C.zdistance(clus_z,self.H0)
@@ -207,7 +207,7 @@ class Millennium(object):
 
 		else:
                         # Load Galaxies
-			gal_p,gal_v,g_mags,r_mags,i_mags = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
+			gal_p,gal_v,gmags,rmags,imags = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Do Projection, get phase spaces
 			rdata, vdata, pro_pos = self.U.line_of_sight(gal_p,gal_v,halo_p,halo_v)
@@ -232,7 +232,7 @@ class Millennium(object):
 		
 
 		# Append to PS
-		PS.append( {'Rdata':rdata,'Vdata':vdata,'pro_pos':np.array(pro_pos),'G_Mags':g_mags,'R_Mags':r_mags,'I_Mags':i_mags,'HaloID':haloid,'M200':m200,'R200':r200,'HVD':hvd} )
+		PS.append( {'Rdata':rdata,'Vdata':vdata,'pro_pos':np.array(pro_pos),'G_Mags':gmags,'R_Mags':rmags,'I_Mags':imags,'HaloID':haloid,'M200':m200,'R200':r200,'HVD':hvd} )
 
 
         def load_project_append_bootstrap(self,HaloID,M200,R200,HVD,Z,Halo_P,Halo_V,PS,weight):
