@@ -137,7 +137,7 @@ class Millennium(object):
 		if self.lightcone == True:
 			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
 			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
-			abs_gmags,abs_rmags,abs_imags,gmags,rmags,imags = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.abs_rmags.tab',delimiter='\t',usecols=(2,3,4),unpack=True)
+			abs_gmags,abs_rmags,abs_imags = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.abs_rmags.tab',delimiter='\t',usecols=(2,3,4),unpack=True)
 		
 		else:
 			if self.small_set == True:
