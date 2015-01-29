@@ -112,7 +112,7 @@ class Millennium(object):
 		# Unpack Array HaloData into local namespace for easier use and clarity
 		m_crit200,r_crit200,hvd,z,hpx,hpy,hpz,hvx,hvy,hvz = halodata
 
-		galdata = self.load_galaxies(haloid,halodata,r_crit200)
+		galdata = self.load_galaxies(haloid,halodata)
 
 		# unpack array galdata into namespace
 		if self.lightcone == True:
@@ -129,7 +129,7 @@ class Millennium(object):
 			return gal_p,gal_v,gmags,rmags,imags
 
 
-	def load_galaxies(self,haloid,halodata,r_crit200):
+	def load_galaxies(self,haloid,halodata):
 		''' Loads haloid galaxies from a local directory '''
 		# Unpack array halodata into local namespace
 		m_crit200,r_crit200,hvd,z,hpx,hpy,hpz,hvx,hvy,hvz = halodata
@@ -137,7 +137,7 @@ class Millennium(object):
 		# load galaxy data
 		if self.lightcone == True:
 			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
-			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,8,5,6,7,9,10,11,12,13,14,15))
 
 		else:
 			if self.small_set == True:
@@ -159,6 +159,8 @@ class Millennium(object):
 		# remove BCG from sample
 		BCG = np.where((gpx != hpx)&(gpy != hpy)&(gpz != hpz))[0]
 		gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags = gpx[BCG], gpy[BCG], gpz[BCG], gvx[BCG], gvy[BCG], gvz[BCG], gmags[BCG], rmags[BCG], imags[BCG]
+		if self.lightcone == True:
+			gal_ra, gal_dec, gal_z = gal_ra[BCG], gal_dec[BCG], gal_z[BCG]
 
 		# Cut down to only members if desired
 		if self.true_mems == True:
@@ -185,7 +187,8 @@ class Millennium(object):
 			ang_d,lum_d = S.C.zdistance(clus_z,self.H0)
 			angles = S.C.findangle(gal_ra,gal_dec,clus_ra,clus_dec)
 			rdata = angles * ang_d
-			vdata = self.c * (gal_z - clus_z) / clus_z
+			vdata = self.c * (gal_z - clus_z) / (1+clus_z)
+			pro_pos = [None]
 
 			# Do Mass Mixing if Applicable	
 			if self.mass_mix == True:
@@ -291,9 +294,28 @@ class Millennium(object):
 
 	def richness_mass_mixing(self,*args,**kwargs):
 		''' Richness estimator combined with mass scatter calculation for millennium galaxy clusters'''
-		pass
+		# Rough Cut at > 3 Mpc and +/- 5000 km/s
+		cut = np.where((rdata < 7) & (vdata < 5000)&(vdata > -5000))[0]
+		rdata = rdata[cut]
+		vdata = vdata[cut]
+		gmags = gmags[cut]
+		rmags = rmags[cut]
+		imags = imags[cut]
 
+		# Shiftgapper for Interlopers
+		clus_data = np.vstack([rdata,vdata,gmags,rmags,imags])
+		clus_data = self.C.shiftgapper(clus_data.T).T
+		rdata,vdata,gmags,rmags,imags = clus_data
 
+		# Measure Velocity Dispersion of all galaxies within 3 Mpc
+		vel_disp = astats.biweight_location(vdata[np.where(rdata<3)])
+
+		# Measure Sweet-Spot Richness
+		# Sweet Spot Calculation when:
+		# v_disp*2 < vdata < v_disp*3, r < r_virial, all colors, rmag_absolute < -19.0
+		SS_richness = len(np.where((vdata < vel_disp*3)&(vdata > vel_disp*2)&(rdata < r_virial)&(rmags_abs < -19.0))[0])
+	
+	
 	def vel_disp_mass_mixing(self,*args,**kwargs):
 		''' Velocity Dispersion estimator combined with mass scatter calculation for millennium galaxy clusters '''
 		pass
