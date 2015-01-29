@@ -6,7 +6,6 @@ programs.
 """
 
 from caustic_stack import *
-from calc_kcor import calc_kcor
 
 class Millennium(object):
 	"""
@@ -116,7 +115,7 @@ class Millennium(object):
 
 		# unpack array galdata into namespace
 		if self.lightcone == True:
-			gal_ra,gal_dec,gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata
+			gal_ra,gal_dec,gal_z,gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags,abs_gmags,abs_rmags,abs_imags = galdata
 		else:
 			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = galdata	
 
@@ -124,7 +123,7 @@ class Millennium(object):
 		gal_v	= np.array([gvx,gvy,gvz],float)
 
 		if self.lightcone == True:
-			return gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v
+			return gal_ra,gal_dec,gal_z,gmags,rmags,imags,abs_gmags,abs_rmags,abs_imags,gal_p,gal_v
 		else:	
 			return gal_p,gal_v,gmags,rmags,imags
 
@@ -138,7 +137,8 @@ class Millennium(object):
 		if self.lightcone == True:
 			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
 			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
-
+			abs_gmags,abs_rmags,abs_imags,gmags,rmags,imags = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.abs_rmags.tab',delimiter='\t',usecols=(2,3,4),unpack=True)
+		
 		else:
 			if self.small_set == True:
 				# 100 Halo Sample	
@@ -160,7 +160,7 @@ class Millennium(object):
 		BCG = np.where((gpx != hpx)&(gpy != hpy)&(gpz != hpz))[0]
 		gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags = gpx[BCG], gpy[BCG], gpz[BCG], gvx[BCG], gvy[BCG], gvz[BCG], gmags[BCG], rmags[BCG], imags[BCG]
 		if self.lightcone == True:
-			gal_ra, gal_dec, gal_z = gal_ra[BCG], gal_dec[BCG], gal_z[BCG]
+			gal_ra, gal_dec, gal_z, abs_gmags, abs_rmags, abs_imags = gal_ra[BCG], gal_dec[BCG], gal_z[BCG], abs_gmags[BCG], abs_rmags[BCG], abs_imags[BCG]
 
 		# Cut down to only members if desired
 		if self.true_mems == True:
@@ -169,7 +169,7 @@ class Millennium(object):
 			gpx,gpy,gpz,gvx,gvy,gvz,gmags,rmags,imags = gpx[cut],gpy[cut],gpz[cut],gvx[cut],gvy[cut],gvz[cut],gmags[cut],rmags[cut],imags[cut]
 
 		if self.lightcone == True:
-			return np.vstack([ gal_ra, gal_dec, gal_z, gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
+			return np.vstack([ gal_ra, gal_dec, gal_z, gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags, abs_gmags, abs_rmags, abs_imags])
 		else:
 			return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 
@@ -181,13 +181,13 @@ class Millennium(object):
 
 		if self.lightcone == True:
                         # Load Galaxies
-			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,abs_gmags,abs_rmags,abs_imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Get angles and phase spaces
 			ang_d,lum_d = S.C.zdistance(clus_z,self.H0)
 			angles = S.C.findangle(gal_ra,gal_dec,clus_ra,clus_dec)
 			rdata = angles * ang_d
-			vdata = self.c * (gal_z - clus_z) / (1+clus_z)
+			vdata = self.c * (gal_z - clus_z) / (1 + clus_z)
 			pro_pos = [None]
 
 			# Do Mass Mixing if Applicable	
