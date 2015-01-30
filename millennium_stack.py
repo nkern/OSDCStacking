@@ -65,15 +65,9 @@ U.print_varibs(names,varib)
 ## Load Halo Data
 U.print_separation('# ...Loading Halos',type=1)
 if lightcone == True:
-	HaloID,RA,DEC,HaloData = M.load_halos()
+	cut_dup,HaloID,RA,DEC,HaloData = M.load_halos(sort=True)
 else:
 	HaloID,HaloData = M.load_halos()
-
-# Sort Halos by A Priori Known Descending Mass (Mass Critical 200)
-if lightcone == True:
-	HaloID,RA,DEC,HaloData = M.sort_halos(HaloID,HaloData,RA=RA,DEC=DEC)
-else:
-	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 
 ####################### END STANDARD PREAMBLE ##############################
 
