@@ -305,7 +305,7 @@ class Millennium(object):
 		# Shiftgapper for Interlopers
 		if shiftgap == True:
 			clus_data = np.vstack([rdata,vdata,gmags,rmags,imags])
-			clus_data = self.S.C.shiftgapper(clus_data.T).T
+			clus_data = self.U.C.shiftgapper(clus_data.T).T
 			rdata,vdata,gmags,rmags,imags = clus_data
 
 		# Take rough virial radius measurement
