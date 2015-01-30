@@ -314,20 +314,17 @@ class Millennium(object):
 		r_vir = np.exp(-1.86)*len(np.where((rmags < -19.55) & (rdata < 1.0) & (np.abs(vdata) < 3500))[0])**0.51
 
 		# Find color of Red Sequence, measured as SDSS_g-SDSS_r vs. SDSS_r absolute magnitude
+		# This is almost always around an abs_gmags-abs_rmags ~ 0.8
 		color_data = gmags-rmags
-		color_cut = np.where(color_data > np.mean(gmags-rmags))[0]
+		color_cut = np.where((color_data<1.0)&(color_data>0.65))[0]
 		size = len(color_cut)
-		hist1 = mp.hist(color_data[color_cut],bins=size/25.,normed=True,histtype='step')
-		hist2 = mp.hist(color_data[color_cut],bins=size/30.,normed=True,histtype='step')
-		hist3 = mp.hist(color_data[color_cut],bins=size/35.,normed=True,histtype='step')
-		mp.close()
-		RS_color = np.mean([hist1[1][np.where(hist1[0]==hist1[0].max())][0],hist2[1][np.where(hist2[0]==hist2[0].max())][0],hist3[1][np.where(hist3[0]==hist3[0].max())][0]])
+		RS_color = astats.biweight_location(color_data[color_cut]) 
 		RS_sigma = astats.biweight_midvariance(color_data)
 	
 		# Measure Sweet-Spot Richness
 		# Sweet Spot Calculation when:
 		# v_disp*2 < vdata < v_disp*3, r < r_virial, all colors, rmag_absolute < -19.0
-		SS_richness = len(np.where((np.abs(vdata) < vel_disp*2)&(np.abs(vdata) > vel_disp*1)&(rdata <= r_vir)&(rmags < -19.0))[0])
+		SS_richness = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir)&(rmags < -19.0))[0])
 		background = len(np.where((np.abs(vdata) < vel_disp*3)&(np.abs(vdata) > vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*3)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma))&(rmags<-19))[0])
 
 		return SS_richness - background
