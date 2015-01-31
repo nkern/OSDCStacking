@@ -186,7 +186,7 @@ class Millennium(object):
 
 		if self.lightcone == True:
                         # Load Galaxies
-			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,clus_z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Get angles and phase spaces
 			ang_d,lum_d = S.C.zdistance(clus_z,self.H0)
