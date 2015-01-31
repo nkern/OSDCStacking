@@ -48,8 +48,7 @@ v_limit		= 4000.0			# Phase space velocity Cut in km/s
 
 # Data Set
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
-halo_num	= 6000				# Total number of halos to work with
-#halo_num	= 2100				# Total number of halos to work with
+halo_num	= @@halo_num@@			# Total number of halos to work with
 
 # Physical
 c               = 2.99792e5                     # speed of light in km/s
