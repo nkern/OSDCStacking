@@ -95,7 +95,6 @@ except IOError:
 M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
 
-raise NameError
 # Initialize Multi-Ensemble Array to hold resultant data
 STACK_DATA = []
 
