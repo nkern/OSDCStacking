@@ -22,7 +22,7 @@ cent_offset     = None                          # Either 'r', 'v', 'full', or No
 
 ### CONSTANTS ###
 # Run Dependent
-ens_num         = 2				# Number of Ensembles to build and solve for IN THIS RUN
+ens_num         = 10				# Number of Ensembles to build and solve for IN THIS RUN
 gal_num         = 50				# Number of galaxies taken per line of sight
 line_num        = 10				# Number of lines of sight to stack over
 method_num      = 0                             # Ensemble Build Method Number
@@ -45,11 +45,12 @@ q		= 10.0				# Scale of Gaussian Kernel Density Estimator
 beta		= 0.2				# Velocity Anisotropy Beta parameter, if constant profile
 fbeta		= 0.65				# fbeta value, see 'Diaferio 1999'
 r_limit 	= 1.5				# Phase space radius Cut Scaled by R200
-v_limit		= 3500.0			# Phase space velocity Cut in km/s
+v_limit		= 4000.0			# Phase space velocity Cut in km/s
 
 # Data Set
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
-halo_num	= 2100				# Total number of halos to work with
+halo_num	= 6163				# Total number of halos to work with
+#halo_num	= 2100				# Total number of halos to work with
 
 # Physical
 c               = 2.99792e5                     # speed of light in km/s
