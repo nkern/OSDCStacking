@@ -33,7 +33,6 @@ method_num=0					# Ensemble Build Method Number
 cell_num=($(seq 1 49))				# Number of Cells
 table_num=1					# Table Re-Run Version  
 job_name="BIN-STACK"				# PBS Job Name Stem
-job_num=(14 14 14 14 14 14 14)			# Number of Jobs Submitted
 halo_num=6000					# Total number of halos to work with
 #halo_num=2100					
 root="'/glusterfs/users/caustics1/nkern'"       # Base Directory
@@ -49,6 +48,13 @@ bootstrap_rep=None				# Bootstrap repetition directory marker, ex. bootstrap1/re
 # Location
 write_stem="bs_m0_run"                          # Stem of write_loc directory
 data_loc="binstack/bs_run_table$table_num"      # Highest Directory for Data
+
+if [ $lightcone == 'True' ]
+then
+	job_num=(20 20 20 10 10 10 10)		# Number of Jobs Submitted
+else
+	job_num=(10 10 10 10 7 7 7)		# Number of Jobs Submitted
+fi
 
 ## Go To Stacking Directory ##
 cd $root/OSDCStacking

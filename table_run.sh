@@ -110,10 +110,15 @@ do
 		# Submit Job Array To PBS by feeding "table_run_pbs.sh" job parameters
 
 		# Define Constants
-		job_array=(13 13 13 13 13 13 13)
+		if [ $lightcone == 'True' ]
+		then
+			job_array=(19 19 19 9 9 9 9)
+		else
+                	job_array=(9 9 9 9 6 6 6)
+		fi
+
 		if [ $self_stack == 'True' ]
 		then
-			job_array=(13 13 13 13 13 13 13) #349) Not doing LOS runs for now
 			let "ens_num=$halo_num/(${job_array[$j]}+1)"
 		else
 			let "ens_num=$halo_num/(${job_array[$j]}+1)/${line_num[$j]}"
