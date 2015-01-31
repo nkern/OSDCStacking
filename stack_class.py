@@ -33,8 +33,8 @@ class Millennium(object):
 
 			# Get rid of duplicates, but choose the "correct" duplicate 
 			# First load average galaxy data
-			avg_haloid = np.loadtxt('Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
-			avg_ra,avg_dec,avg_z = np.loadtxt('Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(1,2,3))
+			avg_haloid = np.loadtxt(self.root+'/OSDCStacking/Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
+			avg_ra,avg_dec,avg_z = np.loadtxt(self.root+'/OSDCStacking/Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(1,2,3))
 			cut = []
 			duplicate = []
 			for i in range(len(HaloID)):

@@ -21,6 +21,6 @@ git add table_run_pbs.sh
 git add table_run.sh
 git add git_add.sh
 git add lum_dist.csv
-
+git add Avg_Gal_Data.tab
 
 
