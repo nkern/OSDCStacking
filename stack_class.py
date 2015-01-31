@@ -189,8 +189,8 @@ class Millennium(object):
 			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v = self.configure_galaxies(haloid,np.array([m200,r200,hvd,clus_z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Get angles and phase spaces
-			ang_d,lum_d = S.C.zdistance(clus_z,self.H0)
-			angles = S.C.findangle(gal_ra,gal_dec,clus_ra,clus_dec)
+			ang_d,lum_d = self.U.C.zdistance(clus_z,self.H0)
+			angles = self.U.C.findangle(gal_ra,gal_dec,clus_ra,clus_dec)
 			rdata = angles * ang_d
 			vdata = self.c * (gal_z - clus_z) / (1 + clus_z)
 			pro_pos = [None]
