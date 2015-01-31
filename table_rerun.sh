@@ -9,8 +9,11 @@
 filename=millennium_stack			# Primary file to be run
 
 ### FLAGS ###
+run_qsub=True                                   # If True perform qsub of scripts, if False create scripts but don't qsub
+
 self_stack=False				# Run self-stack or bin-stack
 scale_data=True					# Scale data by r200 if True
+lightcone=True					# If True, working on Henriques lightcone, if False, working on Guo data cube
 write_data=True					# Write Data to Result directories if True
 init_clean=False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set=False					# 100 Halo Set or 2000 Halo Set
@@ -19,7 +22,7 @@ bootstrap=False					# Perform a bootstrapping technique to estimate error in mas
 new_halo_cent=True				# Use Updated Halo Centers instead of BCG Values
 true_mems=False					# Run with only gals within r200?
 run_los=False					# Run line of sight mass estimation or not
-mirror=True                                     # Mirror Phase Space in Caustic Surface Estimation?
+mirror=False                                    # Mirror Phase Space in Caustic Surface Estimation?
 cent_offset=None				# Either 'r', 'v', 'full', or None.
 
 ### CONSTANTS ###
@@ -28,11 +31,12 @@ gal_num=(5 10 15 25 50 100 150)			# Ngal number
 line_num=(2 5 10 15 25 50 100)			# Line of Sight Number 
 method_num=0					# Ensemble Build Method Number
 cell_num=($(seq 1 49))				# Number of Cells
-table_num=5					# Table Re-Run Version  
+table_num=1					# Table Re-Run Version  
 job_name="BIN-STACK"				# PBS Job Name Stem
 job_num=(14 14 14 14 14 14 21)			# Number of Jobs Submitted
-halo_num=2100					
-root="/glusterfs/users/caustics1/nkern"         # Base Directory
+halo_num=6000					# Total number of halos to work with
+#halo_num=2100					
+root="'/glusterfs/users/caustics1/nkern'"       # Base Directory
 
 # Other Techniques
 edge_perc=0.1					# Percent of Top galaxies used in edge detection technique
@@ -158,11 +162,16 @@ do
 
 	# Create script_rerun.sh file
 	sed -e "s:@@filename@@:$filename:g;s:@@job_name@@:$job_name:g;s:@@write_loc@@:$write_loc:g;s:@@data_loc@@:$data_loc:g;s:@@run_num@@:$_run_num:g" < table_rerun_pbs.sh > $data_loc/$write_loc/script_rerun.sh
+	echo "...created script_rerun.sh"
 
-	# Submit Script to PBS via qsub	
-	echo "Submitting Job to PBS"
-	#qsub $data_loc/$write_loc/script_rerun.sh 
+	if [ $run_qsub == True]
+		then
+		# Submit Script to PBS via qsub	
+		echo "Submitting Job to PBS"
+#		qsub $data_loc/$write_loc/script_rerun.sh 
+	fi
 	echo ""
+        echo '----------------------------------------------------------'
 
 	m=$((m+1))
 done

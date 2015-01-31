@@ -8,8 +8,9 @@ import time
 ### FLAGS ###
 self_stack	= @@self_stack@@		# Run self-stack or bin-stack
 scale_data	= @@scale_data@@		# Scale data by r200 if True
+lightcone	= @@lightcone@@			# If True, working on Henriques lightcone, if False, working on Guo data cube
 write_data 	= @@write_data@@		# Write Data to Result directories if True
-init_clean	= @@init_clean@@			# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
+init_clean	= @@init_clean@@		# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set	= @@small_set@@			# 100 Halo Set or 2000 Halo Set
 mass_mix	= @@mass_mix@@			# Incorporate Mass Mixing Models?
 bootstrap	= @@bootstrap@@			# Perform a bootstrapping technique to estimate error in mass estimation?
@@ -39,15 +40,16 @@ bootstrap_num	= @@bootstrap_num@@		# Highest directory marker for bootstrap data
 bootstrap_rep	= @@bootstrap_rep@@		# Bootstrap repetition directory marker, ex. bootstrap1/rep1
 
 # Caustic Technique Dependent
-q		= 50.0				# Scale of Gaussian Kernel Density Estimator
+q		= 10.0				# Scale of Gaussian Kernel Density Estimator
 beta		= 0.2				# Velocity Anisotropy Beta parameter, if constant profile
 fbeta		= 0.65				# fbeta value, see 'Diaferio 1999'
 r_limit 	= 1.5				# Phase space radius Cut Scaled by R200
-v_limit		= 3500.0			# Phase space velocity Cut in km/s
+v_limit		= 4000.0			# Phase space velocity Cut in km/s
 
 # Data Set
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
-halo_num	= 2100				# Total number of halos to work with
+halo_num	= 6000				# Total number of halos to work with
+#halo_num	= 2100				# Total number of halos to work with
 
 # Physical
 c               = 2.99792e5                     # speed of light in km/s

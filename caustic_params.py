@@ -27,7 +27,7 @@ gal_num         = 50				# Number of galaxies taken per line of sight
 line_num        = 10				# Number of lines of sight to stack over
 method_num      = 0                             # Ensemble Build Method Number
 cell_num        = 0                             # Cell Number ID corresponding to given gal_num & line_num geometry in a Run Table
-table_num       = 10                             # Table Re-Run Version  
+table_num       = 10                            # Table Re-Run Version  
 data_loc        = None				# Alternative data_loc, either None or String
 write_loc       = None				# Alternative write_loc, either None or String
 
@@ -49,7 +49,7 @@ v_limit		= 4000.0			# Phase space velocity Cut in km/s
 
 # Data Set
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
-halo_num	= 6163				# Total number of halos to work with
+halo_num	= 6000				# Total number of halos to work with
 #halo_num	= 2100				# Total number of halos to work with
 
 # Physical
