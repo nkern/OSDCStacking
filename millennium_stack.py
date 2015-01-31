@@ -65,7 +65,7 @@ U.print_varibs(names,varib)
 ## Load Halo Data
 U.print_separation('# ...Loading Halos',type=1)
 if lightcone == True:
-	cut_dup,HaloID,RA,DEC,HaloData = M.load_halos(sort=True)
+	HaloID,RA,DEC,HaloData = M.load_halos(sort=True)
 else:
 	HaloID,HaloData = M.load_halos()
 

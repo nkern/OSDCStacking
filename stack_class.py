@@ -31,6 +31,10 @@ class Millennium(object):
 				HaloID,RA,DEC,HaloData = self.sort_halos(HaloID,HaloData,RA=RA,DEC=DEC)
 				M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 
+			# Get rid of duplicates, but choose the "correct" duplicate 
+			# First load average galaxy data
+			avg_haloid = np.loadtxt('Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
+			avg_ra,avg_dec,avg_z = np.loadtxt('Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(1,2,3))
 			cut = []
 			duplicate = []
 			for i in range(len(HaloID)):
@@ -39,11 +43,13 @@ class Millennium(object):
 					cut.append(i)
 					continue
 				elif len(x) > 1 and HaloID[i] not in duplicate:
-					cut.append(i)
-					duplicate.append(HaloID[i])
+					index = np.where(avg_haloid == HaloID[i])[0][0]
+					if np.abs(RA[i] - avg_ra[index]) < 5 and np.abs(DEC[i] - avg_dec[index]) < 5:	
+						cut.append(i)
+						duplicate.append(HaloID[i])
 			cut = np.array(cut)
-			#HaloID = HaloID[cut]
-			#RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = RA[cut],DEC[cut],HPX[cut],HPY[cut],HPZ[cut],HVX[cut],HVY[cut],HVZ[cut],R_crit200[cut],M_crit200[cut],HVD[cut],Z[cut],Clus_rmag[cut]
+			HaloID = HaloID[cut]
+			RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = RA[cut],DEC[cut],HPX[cut],HPY[cut],HPZ[cut],HVX[cut],HVY[cut],HVZ[cut],R_crit200[cut],M_crit200[cut],HVD[cut],Z[cut],Clus_rmag[cut]
 
 		else:
 			if self.small_set == True:
@@ -83,7 +89,7 @@ class Millennium(object):
 
 		# Ordering of halos in arrays is identical to biglosclusters' inherent ordering.
 		if self.lightcone == True:
-			return cut, HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
+			return HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
 		else:
 			return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
 
