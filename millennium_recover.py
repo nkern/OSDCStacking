@@ -92,9 +92,9 @@ class Recover(Universal):
 			file = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','rb')
 			input = pkl.Unpickler(file)
 			data = input.load()
-			D.add(data,keys=load_names)
+			D.add(data,keys=['HaloData', 'DEC', 'RA', 'HaloID'])
 			D.M_crit200,D.R_crit200,D.Z,D.HVD,D.HPX,D.HPY,D.HPZ,D.HVX,D.HVY,D.HVZ = D.HaloData
-		except:			
+		except IOError:			
                 	# Load and Sort Halos by Mass
                 	D.HaloID,D.HaloData = self.M.load_halos()
                 	D.HaloID,D.HaloData = self.M.sort_halos(D.HaloID,D.HaloData)
