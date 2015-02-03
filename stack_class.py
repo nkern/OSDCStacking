@@ -329,8 +329,8 @@ class Millennium(object):
 		RS_sigma = np.std(color_data[color_cut])
 	
 		# Measure Richness and Background
-		signal = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir)&(rmags > -19.0))[0])
-		background = len(np.where((np.abs(vdata) < vel_disp*3)&(np.abs(vdata) > vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*3)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma))&(rmags > -19))[0])
+		signal = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir)&(rmags < -19.0))[0])
+		background = len(np.where((np.abs(vdata) < vel_disp*3)&(np.abs(vdata) > vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*3)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma))&(rmags < -19))[0])
 
 		richness = signal - background
 		return richness
