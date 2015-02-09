@@ -212,7 +212,7 @@ class Millennium(object):
 
 		else:
                         # Load Galaxies
-			gal_p,gal_v,gmags,rmags,imags = self.configure_galaxies(haloid,np.array([m200,r200,hvd,z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
+			gal_p,gal_v,gmags,rmags,imags = self.configure_galaxies(haloid,np.array([m200,r200,hvd,clus_z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Do Projection, get phase spaces
 			rdata, vdata, pro_pos = self.U.line_of_sight(gal_p,gal_v,halo_p,halo_v)
