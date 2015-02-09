@@ -96,6 +96,18 @@ do
 	fi
 done
 
+# Set Constants and Write README
+echo ""
+echo "...Setting Constants and Writing README file"
+# Define Constants
+if [ $lightcone == 'True' ]
+then
+        job_array=(19 19 19 9 9 9 9)
+else
+        job_array=(9 9 9 9 6 6 6)
+fi
+# Write README
+sed -e "s:@@self_stack@@:$self_stack:g;s:@@scale_data@@:$scale_data:g;s:@@write_data@@:$write_data:g;s:@@init_clean@@:$init_clean:g;s:@@small_set@@:$small_set:g;s:@@mass_mix@@:$mass_mix:g;s:@@bootstrap@@:$bootstrap:g;s:@@new_halo_cent@@:$new_halo_cent:g;s:@@true_mems@@:$true_mems:g;s:@@run_los@@:$run_los:g;s:@@mirror@@:$mirror:g;s:@@cent_offset@@:$cent_offset:g;s:@@ens_num@@:$ens_num:g;s:@@gal_num@@:$gal_num:g;s:@@line_num@@:$line_num:g;s:@@job_array@@:$job_array:g;s:@@method_num@@:$method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@data_loc@@:$data_loc:g;s:@@write_loc@@:$write_loc:g;s:@@edge_perc@@:$edge_perc:g;s:@@mass_scat@@:$mass_scat:g;s:@@center_scat@@:$center_scat:g;s:@@avg_meth@@:$avg_meth:g;s:@@root@@:$root:g;s:@@lightcone@@:$lightcone:g;s:@@halo_num@@:$halo_num:g;" < readme_pbs.txt > $data_loc/readme.txt
 
 ## Begin Nested Loops Through Table
 for i in $(seq 0 6)
@@ -108,14 +120,6 @@ do
 		echo '----------------------------------------------------------'
 		echo -e "cell_num=${cell_num[$k]}\tgal_num=${gal_num[$i]}\tline_num=${line_num[$j]}"
 		# Submit Job Array To PBS by feeding "table_run_pbs.sh" job parameters
-
-		# Define Constants
-		if [ $lightcone == 'True' ]
-		then
-			job_array=(19 19 19 9 9 9 9)
-		else
-                	job_array=(9 9 9 9 6 6 6)
-		fi
 
 		if [ $self_stack == 'True' ]
 		then
@@ -134,8 +138,8 @@ do
 		# Create caustic_params.py file in working directory
 		sed -e "s:@@self_stack@@:$self_stack:g;s:@@scale_data@@:$scale_data:g;s:@@write_data@@:$write_data:g;s:@@init_clean@@:$init_clean:g;s:@@small_set@@:$small_set:g;s:@@mass_mix@@:$mass_mix:g;s:@@bootstrap@@:$bootstrap:g;s:@@new_halo_cent@@:$new_halo_cent:g;s:@@true_mems@@:$true_mems:g;s:@@run_los@@:$run_los:g;s:@@mirror@@:$mirror:g;s:@@cent_offset@@:$cent_offset:g;s:@@ens_num@@:$ens_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@data_loc@@:$data_loc:g;s:@@write_loc@@:$write_loc:g;s:@@edge_perc@@:$edge_perc:g;s:@@mass_scat@@:$mass_scat:g;s:@@center_scat@@:$center_scat:g;s:@@avg_meth@@:$avg_meth:g;s:@@bootstrap_num@@:$bootstrap_num:g;s:@@bootstrap_rep@@:$bootstrap_rep:g;s:@@root@@:$root:g;s:@@lightcone@@:$lightcone:g;s:@@halo_num@@:$halo_num:g;" < caustic_params_pbs.py > $data_loc/$write_loc/caustic_params.py
 
-		# Create script.sh file
-		sed -e "s:@@filename@@:$filename:g;s:@@job_name@@:$job_name:g;s:@@write_loc@@:$write_loc:g;s:@@data_loc@@:$data_loc:g;s:@@job_array@@:$_job_array:g;s:@@root@@:$root:g" < table_run_pbs.sh > $data_loc/$write_loc/script.sh
+		# Create run_pbs.sh file
+		sed -e "s:@@filename@@:$filename:g;s:@@job_name@@:$job_name:g;s:@@write_loc@@:$write_loc:g;s:@@data_loc@@:$data_loc:g;s:@@job_array@@:$_job_array:g;s:@@root@@:$root:g" < table_run_pbs.sh > $data_loc/$write_loc/run_pbs.sh
 
 		# Change run_los = True if line_num == 100 in caustic_params.py
 #		let "a=${cell_num[$k]}%7"
@@ -148,7 +152,7 @@ do
 		if [ $run_qsub == 'True' ]
 			then
 			echo "Submitting PBS Job"
-#			qsub $data_loc/$write_loc/script.sh 
+#			qsub $data_loc/$write_loc/run_pbs.sh 
 		fi
 	
 		echo ""
