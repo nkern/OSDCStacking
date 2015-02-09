@@ -76,7 +76,7 @@ class Millennium(object):
 			# Sort by descending M200
 			if sort == True:
 				HaloData = np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
-				HaloID,HaloData = M.sort_halos(HaloID,HaloData)
+				HaloID,HaloData = self.M.sort_halos(HaloID,HaloData)
 				M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 
 		# Cosmological Correction
