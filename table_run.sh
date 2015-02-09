@@ -152,7 +152,7 @@ do
 		if [ $run_qsub == 'True' ]
 			then
 			echo "Submitting PBS Job"
-#			qsub $data_loc/$write_loc/run_pbs.sh 
+			qsub $data_loc/$write_loc/run_pbs.sh 
 		fi
 	
 		echo ""
