@@ -40,7 +40,7 @@ method_num=0					# Ensemble Build Method Number
 cell_num=($(seq 1 49))				# Number of Cells
 table_num=1					# Table Re-Run Version  
 job_name="BIN-STACK"				# PBS Job Name Stem
-halo_num=6000					# Total number of halos to work with
+#halo_num=6000					# Total number of halos to work with
 #halo_num=2100                                   # Total number of halos to work with
 root="'/glusterfs/users/caustics1/nkern'"       # Base Directory
 
@@ -103,9 +103,17 @@ echo "...Setting Constants and Writing README file"
 if [ $lightcone == 'True' ]
 then
         job_array=(19 19 19 9 9 9 9)
+        halo_num=6000
 else
         job_array=(9 9 9 9 6 6 6)
+        if [ $small_set == 'True' ]
+        then
+                halo_num=100
+        else
+                halo_num=2100
+        fi
 fi
+
 # Write README
 sed -e "s:@@self_stack@@:$self_stack:g;s:@@scale_data@@:$scale_data:g;s:@@write_data@@:$write_data:g;s:@@init_clean@@:$init_clean:g;s:@@small_set@@:$small_set:g;s:@@mass_mix@@:$mass_mix:g;s:@@bootstrap@@:$bootstrap:g;s:@@new_halo_cent@@:$new_halo_cent:g;s:@@true_mems@@:$true_mems:g;s:@@run_los@@:$run_los:g;s:@@mirror@@:$mirror:g;s:@@cent_offset@@:$cent_offset:g;s:@@ens_num@@:$ens_num:g;s:@@gal_num@@:$gal_num:g;s:@@line_num@@:$line_num:g;s:@@job_array@@:$job_array:g;s:@@method_num@@:$method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@data_loc@@:$data_loc:g;s:@@write_loc@@:$write_loc:g;s:@@edge_perc@@:$edge_perc:g;s:@@mass_scat@@:$mass_scat:g;s:@@center_scat@@:$center_scat:g;s:@@avg_meth@@:$avg_meth:g;s:@@root@@:$root:g;s:@@lightcone@@:$lightcone:g;s:@@halo_num@@:$halo_num:g;" < readme_pbs.txt > $data_loc/readme.txt
 
