@@ -75,31 +75,38 @@ if lightcone == True:
 else:
 	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
 
-	HaloID,RA,DEC,HaloData = M.sort_halos(HaloID,HaloData)
-else:
-	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
-
 ############### END STANDARD PREAMBLE ######################
 
-# Load in Halo Data from previously written file, or write file if doesn't exist
+# Load in Halo Data from previously written file that has phase space data that has been mass mixed
 try:
 	f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','rb')
 	input = pkl.Unpickler(f)	
 	run_dict = input.load()
 	globals().update(run_dict)
 	f.close()
+# Do Mass Mixing if Required
 except IOError:
-	try:
-		f = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','wb')	
-		output = pkl.Pickler(f)	
-		if lightcone == True:
-			run_dict = {'HaloID':HaloID,'RA':RA,'DEC':DEC,'HaloData':HaloData}
-		else:
-			run_dict = {'HaloID':HaloID,'HaloData':HaloData}
-		output.dump(run_dict)
-		f.close()
-	except IOError:
-		pass
+	if mass_mix == True and sys.argv[-1] == 'mm':
+		print "...Do Mass Mixing for "+str(halo_num)+" clusters"
+		richness = []
+		for i in range(len(HaloID)):
+			galdata = M.configure_galaxies(HaloID[i],HaloData.T[i])
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gal_p,gal_v = galdata
+			clus_ra = RA[i]
+			clus_dec = DEC[i]
+			clus_z = Z[i]
+			ang_d,lum_d = S.C.zdistance(clus_z,H0)
+			angles = S.C.findangle(gal_ra,gal_dec,clus_ra,clus_dec)
+			rdata = angles * ang_d
+			vdata = c * (gal_z - clus_z) / (1 + clus_z)
+			richness.append(M.richness_est(rdata,vdata,gmags,rmags,imags))
+	
+		richness = np.array(richness)
+
+		# Sorty by Richness
+	
+		print "...Mass Mixing Completed!"
+		raise NameError	
 
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData

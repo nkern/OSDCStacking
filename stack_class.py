@@ -179,7 +179,7 @@ class Millennium(object):
 			return np.vstack([ gpx, gpy, gpz, gvx, gvy, gvz, gmags, rmags, imags ])
 
 
-	def load_project_append(self,haloid,m200,r200,hvd,clus_z,halo_p,halo_v,PS,clus_ra=None,clus_dec=None):
+	def load_project_append(self,haloid,m200,r200,hvd,clus_z,halo_p,halo_v,PS,clus_ra=None,clus_dec=None,project=True,rdata=None,vdata=None,gmags=None,rmags=None,imags=None):
 		"""
 		This function loads galaxy data then projects it, discarding the galaxy data after using it to save memory
 		"""
@@ -212,18 +212,20 @@ class Millennium(object):
 
 		else:
                         # Load Galaxies
-			gal_p,gal_v,gmags,rmags,imags = self.configure_galaxies(haloid,np.array([m200,r200,hvd,clus_z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
+			if project == True:
+				gal_p,gal_v,gmags,rmags,imags = self.configure_galaxies(haloid,np.array([m200,r200,hvd,clus_z,halo_p[0],halo_p[1],halo_p[2],halo_v[0],halo_v[1],halo_v[2]]))
 
 			# Do Projection, get phase spaces
-			rdata, vdata, pro_pos = self.U.line_of_sight(gal_p,gal_v,halo_p,halo_v)
-			rdata = np.array(rdata)
-			vdata = np.array(vdata)
-			pro_pos = np.array(pro_pos)
+			if project == True:
+				rdata, vdata, pro_pos = self.U.line_of_sight(gal_p,gal_v,halo_p,halo_v)
+				rdata = np.array(rdata)
+				vdata = np.array(vdata)
+				pro_pos = np.array(pro_pos)
 
 			# Do Mass Mixing if Applicable	
 			if self.mass_mix == True:
 				if self.mm_est == 'richness':
-					pass
+					richness = M.richness_est(rdata,vdata,gmags,rmags,imags)
 
 				elif self.mm_est == 'vel_disp':
 					pass
@@ -237,7 +239,7 @@ class Millennium(object):
 		
 
 		# Append to PS
-		PS.append( {'Rdata':rdata,'Vdata':vdata,'pro_pos':np.array(pro_pos),'G_Mags':gmags,'R_Mags':rmags,'I_Mags':imags,'HaloID':haloid,'M200':m200,'R200':r200,'HVD':hvd} )
+		PS.append( {'Rdata':rdata,'Vdata':vdata,'pro_pos':pro_pos,'G_Mags':gmags,'R_Mags':rmags,'I_Mags':imags,'HaloID':haloid,'M200':m200,'R200':r200,'HVD':hvd} )
 
 
         def load_project_append_bootstrap(self,HaloID,M200,R200,HVD,Z,Halo_P,Halo_V,PS,weight):
@@ -330,7 +332,7 @@ class Millennium(object):
 	
 		# Measure Richness and Background
 		signal = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir)&(rmags < -19.0))[0])
-		background = len(np.where((np.abs(vdata) < vel_disp*3)&(np.abs(vdata) > vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*3)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma))&(rmags < -19))[0])
+		background = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*5)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma))&(rmags < -19))[0])
 
 		richness = signal - background
 		return richness
