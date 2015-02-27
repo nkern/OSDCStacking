@@ -38,7 +38,7 @@ else:
 	elif cent_offset == 'v':
 		data_loc = 'binstack/voff_run_table'+str(table_num)
 	if mass_mix == True:							# Change write_loc if mass mixing
-		data_loc = 'mass_mix/mm_'+str(mass_scat)+'_run_table'+str(table_num)
+		data_loc = 'mass_mix/mm_run_table'+str(table_num)
 		write_loc = 'mm_m'+str(method_num)+'_run'+str(cell_num)
 		if cent_offset == 'r':
 			data_loc = 'mass_mix/roff_run_table'+str(table_num)

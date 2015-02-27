@@ -8,11 +8,11 @@ import time
 ### FLAGS ###
 self_stack	= False				# Run self-stack or bin-stack
 scale_data	= True				# Scale to-be-stacked phase space radial data by r200 if True
-lightcone	= True				# If True, working on Henriques lightcone, if False, working on Guo data cube
+lightcone	= False				# If True, working on Henriques lightcone, if False, working on Guo data cube
 write_data 	= False				# Write Data to Result directories if True
 init_clean	= False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set	= False				# 100 Halo Set or 2000 Halo Set
-mass_mix	= False				# Incorporate Mass Mixing Models?
+mass_mix	= True				# Incorporate Mass Mixing Models?
 bootstrap	= False				# Perform a bootstrapping technique to estimate error in mass estimation?
 new_halo_cent	= True				# Use Updated Halo Centers instead of BCG Values
 mirror		= False				# Mirror Phase Space in Caustic Surface Estimation?
@@ -27,14 +27,13 @@ gal_num         = 50				# Number of galaxies taken per line of sight
 line_num        = 10				# Number of lines of sight to stack over
 method_num      = 0                             # Ensemble Build Method Number
 cell_num        = 0                             # Cell Number ID corresponding to given gal_num & line_num geometry in a Run Table
-table_num       = 10                            # Table Re-Run Version  
+table_num       = 3                             # Table Re-Run Version  
 data_loc        = None				# Alternative data_loc, either None or String
 write_loc       = None				# Alternative write_loc, either None or String
 
 # Other Techniques
-mm_est		= None				# "Mass Mix Estimator" - What scaling technique to get mass scatter? 'richness', 'vel_disp', 'luminosity', 
+mm_est		= 'richness'				# "Mass Mix Estimator" - What scaling technique to get mass scatter? 'richness', 'vel_disp', 'luminosity', 
 edge_perc	= 0.1				# Fractional percent of Top galaxies used in edge detection technique
-mass_scat       = None				# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
 center_scat     = None                          # If guessing halo center, fractional induced scatter into known center
 avg_meth        = 'median'			# If bin stacking, by which method do you average bin properties? (ex. median, mean)
 bootstrap_num   = None				# Highest directory marker for bootstrap data, ex. bootstrap1
@@ -49,8 +48,8 @@ v_limit		= 4000.0			# Phase space velocity Cut in km/s
 
 # Data Set
 data_set	= 'Guo30_2'			# Data set to draw semi analytic data from
-halo_num	= 6000				# Total number of halos to work with
-#halo_num	= 2100				# Total number of halos to work with
+#halo_num	= 6000				# Total number of halos to work with
+halo_num	= 2100				# Total number of halos to work with
 
 # Physical
 c               = 2.99792e5                     # speed of light in km/s

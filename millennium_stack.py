@@ -38,7 +38,7 @@ else:
 	elif cent_offset == 'v':
 		data_loc = 'binstack/voff_run_table'+str(table_num)
 	if mass_mix == True:							# Change write_loc if mass mixing
-		data_loc = 'mass_mix/mm_'+str(mass_scat)+'_run_table'+str(table_num)
+		data_loc = 'mass_mix/mm_run_table'+str(table_num)
 		write_loc = 'mm_m'+str(method_num)+'_run'+str(cell_num)
 		if cent_offset == 'r':
 			data_loc = 'mass_mix/roff_run_table'+str(table_num)
@@ -92,7 +92,7 @@ except IOError:
 		pass
 
 # Unpack HaloData array into local namespace
-M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
+M_crit200,R_crit200,HVD,Z,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
 
 # Initialize Multi-Ensemble Array to hold resultant data

@@ -21,8 +21,9 @@ class Millennium(object):
 		'''This function loads halo data and makes cosmology corrections'''
 
 		if self.lightcone == True:
-			HaloID = np.loadtxt(self.root+'/OSDCStacking/centralsClusters2.csv',delimiter=',',usecols=(0,),unpack=True,dtype='str')
-			RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = np.loadtxt(self.root+'/OSDCStacking/centralsClusters2.csv',delimiter=',',usecols=(20,21,14,15,16,17,18,19,8,2,4,22,12),unpack=True)
+			HaloID = np.loadtxt(self.root+'/../MILLENNIUM/Henriques/centralsClusters2.csv',delimiter=',',usecols=(0,),unpack=True,dtype='str')
+			#HaloID = np.arange(8153)	# HaloID is inherent ordering of centralsClusters2.csv, which holds 8153 clusters
+			RA,DEC,HPX,HPY,HPZ,HVX,HVY,HVZ,R_crit200,M_crit200,HVD,Z,Clus_rmag = np.loadtxt(self.root+'/../MILLENNIUM/Henriques/centralsClusters2.csv',delimiter=',',usecols=(20,21,14,15,16,17,18,19,8,2,4,22,12),unpack=True)
 			M_crit200 *= 1e10
 
 			# Sort by descending M200
@@ -31,10 +32,11 @@ class Millennium(object):
 				HaloID,RA,DEC,HaloData = self.sort_halos(HaloID,HaloData,RA=RA,DEC=DEC)
 				M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 
+			## No duplicates in lowz_data_all, so below is unnecessary
 			# Get rid of duplicates, but choose the "correct" duplicate 
 			# First load average galaxy data
-			avg_haloid = np.loadtxt(self.root+'/OSDCStacking/Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
-			avg_ra,avg_dec,avg_z = np.loadtxt(self.root+'/OSDCStacking/Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(1,2,3))
+			avg_haloid = np.loadtxt(self.root+'/../MILLENNIUM/Henriques/lowz_data2_2/Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
+			avg_ra,avg_dec,avg_z = np.loadtxt(self.root+'/../MILLENNIUM/Henriques/lowz_data2_2/Avg_Gal_Data.tab',delimiter='\t',unpack=True,usecols=(1,2,3))
 			cut = []
 			duplicate = []
 			for i in range(len(HaloID)):
@@ -89,9 +91,9 @@ class Millennium(object):
 
 		# Ordering of halos in arrays is identical to biglosclusters' inherent ordering.
 		if self.lightcone == True:
-			return HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
+			return HaloID, RA, DEC, np.vstack([M_crit200,R_crit200,HVD,Z,HPX,HPY,HPZ,HVX,HVY,HVZ])
 		else:
-			return HaloID, np.vstack([M_crit200,R_crit200,Z,HVD,HPX,HPY,HPZ,HVX,HVY,HVZ])
+			return HaloID, np.vstack([M_crit200,R_crit200,HVD,Z,HPX,HPY,HPZ,HVX,HVY,HVZ])
 
 
 	def sort_halos(self,HaloID,HaloData,RA=None,DEC=None):
@@ -129,7 +131,7 @@ class Millennium(object):
 
 		if self.lightcone == True:
 			return gal_ra,gal_dec,gal_z,abs_gmags,abs_rmags,abs_imags,gal_p,gal_v
-		else:	
+		else:
 			return gal_p,gal_v,gmags,rmags,imags
 
 
@@ -140,9 +142,9 @@ class Millennium(object):
 
 		# load galaxy data
 		if self.lightcone == True:
-			gal_id = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
-			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
-			abs_gmags,abs_rmags,abs_imags = np.loadtxt(self.root+'/Caustic/lowz_data2_2/'+str(haloid)+'.abs_rmags.tab',delimiter='\t',usecols=(2,3,4),unpack=True)
+			gal_id = np.loadtxt(self.root+'/../MILLENNIUM/Henriques/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(0,),dtype='str')
+			gal_ra,gal_dec,gal_z,gmags,rmags,imags,gpx,gpy,gpz,gvx,gvy,gvz,mem = np.loadtxt(self.root+'/../MILLENNIUM/Henriques/lowz_data2_2/'+str(haloid)+'.galaxies.tab',delimiter='\t',unpack=True,usecols=(1,2,3,5,6,7,9,10,11,12,13,14,15))
+			abs_gmags,abs_rmags,abs_imags = np.loadtxt(self.root+'/../MILLENNIUM/Henriques/lowz_data2_2/'+str(haloid)+'.abs_rmags.tab',delimiter='\t',usecols=(2,3,4),unpack=True)
 		
 		else:
 			if self.small_set == True:
@@ -225,7 +227,7 @@ class Millennium(object):
 			# Do Mass Mixing if Applicable	
 			if self.mass_mix == True:
 				if self.mm_est == 'richness':
-					richness = M.richness_est(rdata,vdata,gmags,rmags,imags)
+					richness = self.richness_est(rdata,vdata,gmags,rmags,imags)
 
 				elif self.mm_est == 'vel_disp':
 					pass
@@ -302,8 +304,9 @@ class Millennium(object):
 	def richness_est(self,rdata,vdata,gmags,rmags,imags,shiftgap=True):
 		''' Richness estimator, magnitudes should be absolute mags'''
 
-		# Rough Cut at > 3 Mpc and +/- 5000 km/s
-		cut = np.where((rdata < 7) & (np.abs(vdata) < 5000))[0]
+		# Rough Cut at < 7 Mpc and +/- 5000 km/s
+		rmag_limit = -19.0
+		cut = np.where((rdata < 7) & (np.abs(vdata) < 5000) & (rmags < rmag_limit))[0]
 		rdata = rdata[cut]
 		vdata = vdata[cut]
 		gmags = gmags[cut]
@@ -327,12 +330,12 @@ class Millennium(object):
 		color_data = gmags-rmags
 		color_cut = np.where((color_data<1.0)&(color_data>0.65))[0]
 		size = len(color_cut)
-		RS_color = np.mean(color_data[color_cut]) 
-		RS_sigma = np.std(color_data[color_cut])
+		RS_color = astats.biweight_location(color_data[color_cut]) 
+		RS_sigma = astats.biweight_midvariance(color_data[color_cut])
 	
 		# Measure Richness and Background
-		signal = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir)&(rmags < -19.0))[0])
-		background = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*5)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma))&(rmags < -19))[0])
+		signal = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir))[0])
+		background = len(np.where((np.abs(vdata) < vel_disp*2)&(rdata <= r_vir*6)&(rdata >= r_vir*5)&(color_data<(RS_color+RS_sigma))&(color_data>(RS_color-RS_sigma)))[0])
 
 		richness = signal - background
 		return richness
