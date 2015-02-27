@@ -27,16 +27,17 @@ cell_num=@@cell_num@@				# Number of Cells
 table_num=@@table_num@@				# Table Re-Run Version  
 job_name=@@job_name@@				# PBS Job Name Stem
 halo_num=@@halo_num@@				# Total number of halos to work with
-root=@@root@@					# Base Directory
+root='@@root@@'					# Base Directory
 
 # Other Techniques
+mm_est=@@mm_est@@				# If mass mxixing, observable to bin on, 'richness', 'veldisp'
 edge_perc=@@edge_perc@@				# Percent of Top galaxies used in edge detection technique
 mass_scat=@@mass_scat@@				# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
 center_scat=@@center_scat@@			# If guessing halo center, fractional induced scatter into known center
 avg_meth=@@avg_meth@@				# If bin stacking, by which method do you average bin properties? (ex. median, mean)
 
 # Location
-data_loc=@@data_loc@@				# Highest Directory for Data
+data_loc='@@data_loc@@'				# Highest Directory for Data
 
 
 

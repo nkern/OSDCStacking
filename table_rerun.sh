@@ -38,6 +38,7 @@ halo_num=6000					# Total number of halos to work with
 root="'/glusterfs/users/caustics1/nkern'"       # Base Directory
 
 # Other Techniques
+mm_est='richness'				# If mass mixing, observable to bin on, 'richness', 'veldisp'
 edge_perc=0.1					# Percent of Top galaxies used in edge detection technique
 center_scat=None				# If guessing halo center, fractional induced scatter into known center
 avg_meth="'median'"				# If bin stacking, by which method do you average bin properties? (ex. median, mean)

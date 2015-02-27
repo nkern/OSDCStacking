@@ -32,8 +32,8 @@ data_loc	= '@@data_loc@@'		# Alternative data_loc, either None or String
 write_loc	= '@@write_loc@@'		# Alternative write_loc, either None or String
 
 # Other Techniques
+mm_est		= @@mm_est@@			# If mass mixing, what observable to bin on, 'richness', 'veldisp'
 edge_perc       = @@edge_perc@@			# Percent of Top galaxies used in edge detection technique
-mass_scat	= @@mass_scat@@			# If mass_mix = True, fractional scatter induced into table mass, feed as string, ex. "'0.25'"
 center_scat	= @@center_scat@@		# If guessing halo center, fractional induced scatter into known center
 avg_meth	= @@avg_meth@@			# If bin stacking, by which method do you average bin properties? (ex. median, mean)
 bootstrap_num	= @@bootstrap_num@@		# Highest directory marker for bootstrap data, ex. bootstrap1
@@ -57,5 +57,5 @@ H0              = h*100.0                       # Hubble Constant, km s-1 Mpc-1
 
 # Other
 run_time	= time.asctime()                # Time when program was started
-root 		= @@root@@			# Root for OSDC
+root 		= '@@root@@'			# Root for OSDC
 

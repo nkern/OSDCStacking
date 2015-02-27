@@ -9,7 +9,7 @@ import time
 self_stack	= False				# Run self-stack or bin-stack
 scale_data	= True				# Scale to-be-stacked phase space radial data by r200 if True
 lightcone	= False				# If True, working on Henriques lightcone, if False, working on Guo data cube
-write_data 	= False				# Write Data to Result directories if True
+write_data 	= True				# Write Data to Result directories if True
 init_clean	= False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
 small_set	= False				# 100 Halo Set or 2000 Halo Set
 mass_mix	= True				# Incorporate Mass Mixing Models?
