@@ -69,12 +69,6 @@ if lightcone == True:
 else:
 	HaloID,HaloData = M.load_halos()
 
-# Sort Halos by A Priori Known Descending Mass (Mass Critical 200)
-if lightcone == True:
-	HaloID,RA,DEC,HaloData = M.sort_halos(HaloID,HaloData)
-else:
-	HaloID,HaloData = M.sort_halos(HaloID,HaloData)
-
 # Unpack HaloData array into local namespace
 M_crit200,R_crit200,HVD,Z,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 Halo_P,Halo_V = np.vstack([HPX,HPY,HPZ]).T,np.vstack([HVX,HVY,HVZ]).T
@@ -88,6 +82,7 @@ try:
 	input = pkl.Unpickler(f)	
 	run_dict = input.load()
 	globals().update(run_dict)
+	M_crit200,R_crit200,HVD,Z,HPX,HPY,HPZ,HVX,HVY,HVZ = HaloData
 	f.close()
 
 # Do Mass Mixing if Required
