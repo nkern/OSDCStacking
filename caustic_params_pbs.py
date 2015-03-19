@@ -32,7 +32,7 @@ data_loc	= '@@data_loc@@'		# Alternative data_loc, either None or String
 write_loc	= '@@write_loc@@'		# Alternative write_loc, either None or String
 
 # Other Techniques
-mm_est		= @@mm_est@@			# If mass mixing, what observable to bin on, 'richness', 'veldisp'
+mm_est		= '@@mm_est@@'			# If mass mixing, what observable to bin on, 'richness', 'veldisp'
 edge_perc       = @@edge_perc@@			# Percent of Top galaxies used in edge detection technique
 center_scat	= @@center_scat@@		# If guessing halo center, fractional induced scatter into known center
 avg_meth	= @@avg_meth@@			# If bin stacking, by which method do you average bin properties? (ex. median, mean)

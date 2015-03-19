@@ -32,6 +32,7 @@ root='@@root@@'					# Base Directory
 # Other Techniques
 mm_est=@@mm_est@@				# If mass mxixing, observable to bin on, 'richness', 'veldisp'
 edge_perc=@@edge_perc@@				# Percent of Top galaxies used in edge detection technique
+center_scat=@@center_scat@@               # If guessing halo center, fractional induced scatter into known center
 avg_meth=@@avg_meth@@				# If bin stacking, by which method do you average bin properties? (ex. median, mean)
 
 # Location
