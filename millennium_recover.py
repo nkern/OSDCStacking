@@ -92,7 +92,7 @@ class Recover(Universal):
 			file = open(root+'/OSDCStacking/'+data_loc+'/halo_arrays.pkl','rb')
 			input = pkl.Unpickler(file)
 			data = input.load()
-			D.add(data,keys=['HaloData', 'DEC', 'RA', 'HaloID'])
+			D.add(data,keys=['HaloData', 'DEC', 'RA', 'HaloID','richness'])
 			D.M_crit200,D.R_crit200,D.Z,D.HVD,D.HPX,D.HPY,D.HPZ,D.HVX,D.HVY,D.HVZ = D.HaloData
 		except IOError:			
                 	# Load and Sort Halos by Mass
@@ -443,6 +443,8 @@ class Work(Recover):
 			ax.legend([p1,p2,p3,p4],["Table Mass","Median","Mean","biweightLocation"],fontsize=8)
 
 
+	def mass_mix_stats(self,est_mass,true_mass,observable):
+		pass
 
 
 
