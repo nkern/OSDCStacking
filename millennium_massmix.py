@@ -49,7 +49,7 @@ if bootstrap == True:
 	data_loc = 'binstack/bootstrap'+str(bootstrap_num)+'/rep'+str(bootstrap_rep)
 
 ## Make dictionary for loaded constants, doesn't matter if some don't exist
-keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_clean','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror','edge_perc','lightcone','mm_est']
+keys = ['c','h','H0','q','beta','fbeta','r_limit','v_limit','data_set','halo_num','gal_num','line_num','method_num','write_loc','data_loc','root','self_stack','scale_data','write_data','run_time','init_shiftgap','shiftgapper','edge_int_remove','small_set','run_los','bootstrap','run_num','ens_num','cell_num','stack_range','mass_mix','mass_scat','bootstrap_num','bootstrap_rep','avg_meth','cent_offset','center_scat','new_halo_cent','true_mems','mirror','edge_perc','lightcone','mm_est']
 varib = ez.create(keys,locals())
 varib.update({'_name_':'varib'})
 
@@ -246,7 +246,7 @@ for j in range(ens_num):
 		Rdata,Vdata,G_Mags,R_Mags,I_Mags = np.array(Rdata),np.array(Vdata),np.array(G_Mags),np.array(R_Mags),np.array(I_Mags)	
 
 	# Build Ensemble and Run Caustic Technique
-	stack_data = S.caustic_stack(Rdata,Vdata,HaloID[stack_range[j*line_num:(j+1)*line_num]],np.vstack([M_crit200[stack_range[j*line_num:(j+1)*line_num]],R_crit200[stack_range[j*line_num:(j+1)*line_num]],HVD[stack_range[j*line_num:(j+1)*line_num]]]),line_num,feed_mags=True,G_Mags=G_Mags,R_Mags=R_Mags,I_Mags=I_Mags)
+	stack_data = S.caustic_stack(Rdata,Vdata,HaloID[stack_range[j*line_num:(j+1)*line_num]],np.vstack([M_crit200[stack_range[j*line_num:(j+1)*line_num]],R_crit200[stack_range[j*line_num:(j+1)*line_num]],HVD[stack_range[j*line_num:(j+1)*line_num]]]),line_num,feed_mags=True,G_Mags=G_Mags,R_Mags=R_Mags,I_Mags=I_Mags,ens_shiftgap=shiftgapper,edge_int_remove=edge_int_remove)
 
 	# Append other Arrays
 	#if lightcone == False:

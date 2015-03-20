@@ -13,7 +13,7 @@ fi
 ##################
 
 ## Initialize Configuration Arrays and Other Constants
-filename=millennium_massmix			# Primary file to be run
+filename=millennium_stack			# Primary file to be run
 
 ### FLAGS ###
 run_qsub=False					# If True perform qsub of scripts, if False create scripts but don't qsub
@@ -22,7 +22,9 @@ self_stack=False				# Run self-stack or bin-stack
 scale_data=True					# Scale data by r200 if True
 lightcone=False					# Run over Henriques Lightcone or Guo Data Cube?
 write_data=True					# Write Data to Result directories if True
-init_clean=False				# Do an extra shiftgapper on ensemble before the lines of sight get stacked.
+init_shiftgap=False				# Run a shiftgapper on individual LOS phase space before it gets stacked
+shiftgapper=True				# Run a Shiftgapper Technique on Phase Space Before Caustic Technique
+edge_int_remove=True				# Run Inflection Interloper Removal Technique
 small_set=False					# 100 Halo Set or 2000 Halo Set
 mass_mix=True					# Incorporate Mass Mixing Models?
 bootstrap=False					# Perform a bootstrapping technique to estimate error in mass estimation?
@@ -41,7 +43,7 @@ cell_num=($(seq 1 49))				# Number of Cells
 table_num=1					# Table Re-Run Version  
 job_name="MASS-MIX"				# PBS Job Name Stem
 #halo_num=6000					# Total number of halos to work with
-halo_num=2100                                   # Total number of halos to work with
+#halo_num=2100                                   # Total number of halos to work with
 root="/glusterfs/users/caustics1/nkern"       # Base Directory
 
 # Other Techniques
@@ -115,7 +117,7 @@ else
 fi
 
 # Write README
-sed -e "s:@@self_stack@@:$self_stack:g;s:@@scale_data@@:$scale_data:g;s:@@write_data@@:$write_data:g;s:@@init_clean@@:$init_clean:g;s:@@small_set@@:$small_set:g;s:@@mass_mix@@:$mass_mix:g;s:@@bootstrap@@:$bootstrap:g;s:@@new_halo_cent@@:$new_halo_cent:g;s:@@true_mems@@:$true_mems:g;s:@@run_los@@:$run_los:g;s:@@mirror@@:$mirror:g;s:@@cent_offset@@:$cent_offset:g;s:@@ens_num@@:$ens_num:g;s:@@gal_num@@:$gal_num:g;s:@@line_num@@:$line_num:g;s:@@job_array@@:$job_array:g;s:@@method_num@@:$method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@data_loc@@:$data_loc:g;s:@@write_loc@@:$write_loc:g;s:@@mm_est@@:$mm_est:g;s:@@edge_perc@@:$edge_perc:g;s:@@center_scat@@:$center_scat:g;s:@@avg_meth@@:$avg_meth:g;s:@@root@@:$root:g;s:@@lightcone@@:$lightcone:g;s:@@halo_num@@:$halo_num:g;" < readme_pbs.txt > $data_loc/readme.txt
+sed -e "s:@@self_stack@@:$self_stack:g;s:@@scale_data@@:$scale_data:g;s:@@write_data@@:$write_data:g;s:@@init_shiftgap@@:$init_shiftgap:g;s:@@shiftgapper@@:$shiftgapper:g;s:@@edge_int_remove@@:$edge_int_remove:g;s:@@small_set@@:$small_set:g;s:@@mass_mix@@:$mass_mix:g;s:@@bootstrap@@:$bootstrap:g;s:@@new_halo_cent@@:$new_halo_cent:g;s:@@true_mems@@:$true_mems:g;s:@@run_los@@:$run_los:g;s:@@mirror@@:$mirror:g;s:@@cent_offset@@:$cent_offset:g;s:@@ens_num@@:$ens_num:g;s:@@gal_num@@:$gal_num:g;s:@@line_num@@:$line_num:g;s:@@job_array@@:$job_array:g;s:@@method_num@@:$method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@data_loc@@:$data_loc:g;s:@@write_loc@@:$write_loc:g;s:@@mm_est@@:$mm_est:g;s:@@edge_perc@@:$edge_perc:g;s:@@center_scat@@:$center_scat:g;s:@@avg_meth@@:$avg_meth:g;s:@@root@@:$root:g;s:@@lightcone@@:$lightcone:g;s:@@halo_num@@:$halo_num:g;" < readme_pbs.txt > $data_loc/readme.txt
 
 # If Mass Mixing, create Halo_Arrays.pkl file
 if [ -e $data_loc\/halo_arrays.pkl ]
@@ -152,7 +154,7 @@ do
 		_job_array="${job_array[$j]}"
 
 		# Create caustic_params.py file in working directory
-		sed -e "s:@@self_stack@@:$self_stack:g;s:@@scale_data@@:$scale_data:g;s:@@write_data@@:$write_data:g;s:@@init_clean@@:$init_clean:g;s:@@small_set@@:$small_set:g;s:@@mass_mix@@:$mass_mix:g;s:@@bootstrap@@:$bootstrap:g;s:@@new_halo_cent@@:$new_halo_cent:g;s:@@true_mems@@:$true_mems:g;s:@@run_los@@:$run_los:g;s:@@mirror@@:$mirror:g;s:@@cent_offset@@:$cent_offset:g;s:@@ens_num@@:$ens_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@data_loc@@:$data_loc:g;s:@@write_loc@@:$write_loc:g;s:@@mm_est@@:$mm_est:g;s:@@edge_perc@@:$edge_perc:g;s:@@center_scat@@:$center_scat:g;s:@@avg_meth@@:$avg_meth:g;s:@@bootstrap_num@@:$bootstrap_num:g;s:@@bootstrap_rep@@:$bootstrap_rep:g;s:@@root@@:$root:g;s:@@lightcone@@:$lightcone:g;s:@@halo_num@@:$halo_num:g;" < caustic_params_pbs.py > $data_loc/$write_loc/caustic_params.py
+		sed -e "s:@@self_stack@@:$self_stack:g;s:@@scale_data@@:$scale_data:g;s:@@write_data@@:$write_data:g;s:@@init_shiftgap@@:$init_shiftgap:g;s:@@shiftgapper@@:$shiftgapper:g;s:@@edge_int_remove@@:$edge_int_remove:g;s:@@small_set@@:$small_set:g;s:@@mass_mix@@:$mass_mix:g;s:@@bootstrap@@:$bootstrap:g;s:@@new_halo_cent@@:$new_halo_cent:g;s:@@true_mems@@:$true_mems:g;s:@@run_los@@:$run_los:g;s:@@mirror@@:$mirror:g;s:@@cent_offset@@:$cent_offset:g;s:@@ens_num@@:$ens_num:g;s:@@gal_num@@:$_gal_num:g;s:@@line_num@@:$_line_num:g;s:@@method_num@@:$method_num:g;s:@@cell_num@@:$_cell_num:g;s:@@table_num@@:$table_num:g;s:@@data_loc@@:$data_loc:g;s:@@write_loc@@:$write_loc:g;s:@@mm_est@@:$mm_est:g;s:@@edge_perc@@:$edge_perc:g;s:@@center_scat@@:$center_scat:g;s:@@avg_meth@@:$avg_meth:g;s:@@bootstrap_num@@:$bootstrap_num:g;s:@@bootstrap_rep@@:$bootstrap_rep:g;s:@@root@@:$root:g;s:@@lightcone@@:$lightcone:g;s:@@halo_num@@:$halo_num:g;" < caustic_params_pbs.py > $data_loc/$write_loc/caustic_params.py
 
 		# Create run_pbs.sh file
 		sed -e "s:@@filename@@:$filename:g;s:@@job_name@@:$job_name:g;s:@@write_loc@@:$write_loc:g;s:@@data_loc@@:$data_loc:g;s:@@job_array@@:$_job_array:g;s:@@root@@:$root:g" < table_run_pbs.sh > $data_loc/$write_loc/run_pbs.sh
