@@ -19,18 +19,6 @@ run_los=@@run_los@@				# Run line of sight mass estimation or not
 mirror=@@mirror@@				# Mirror Phase Space in Caustic Surface Estimation?
 cent_offset=@@cent_offset@@			# Either 'r', 'v', 'full', or None.
 
-### CONSTANTS ###
-# Run Dependent
-gal_num=@@gal_num@@				# Ngal number
-line_num=@@line_num@@				# Line of Sight Number 
-jobs_array=@@job_array@@			# Number of PBS runs to feed for every run_table row (distinct line_of_sight values)
-method_num=@@method_num@@			# Ensemble Build Method Number
-cell_num=@@cell_num@@				# Number of Cells
-table_num=@@table_num@@				# Table Re-Run Version  
-job_name=@@job_name@@				# PBS Job Name Stem
-halo_num=@@halo_num@@				# Total number of halos to work with
-root='@@root@@'					# Base Directory
-
 # Other Techniques
 mm_est=@@mm_est@@				# If mass mxixing, observable to bin on, 'richness', 'veldisp'
 edge_perc=@@edge_perc@@				# Percent of Top galaxies used in edge detection technique
