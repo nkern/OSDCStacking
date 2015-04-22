@@ -24,6 +24,7 @@ mm_est=@@mm_est@@				# If mass mxixing, observable to bin on, 'richness', 'veldi
 edge_perc=@@edge_perc@@				# Percent of Top galaxies used in edge detection technique
 center_scat=@@center_scat@@               # If guessing halo center, fractional induced scatter into known center
 avg_meth=@@avg_meth@@				# If bin stacking, by which method do you average bin properties? (ex. median, mean)
+h=@@h@@
 
 # Location
 data_loc='@@data_loc@@'				# Highest Directory for Data

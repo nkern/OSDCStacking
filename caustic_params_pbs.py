@@ -54,7 +54,7 @@ halo_num	= @@halo_num@@			# Total number of halos to work with
 
 # Physical
 c               = 2.99792e5                     # speed of light in km/s
-h               = 1.0                           # Hubble Constant, unitless
+h               = @@h@@                           # Hubble Constant, unitless
 H0              = h*100.0                       # Hubble Constant, km s-1 Mpc-1
 
 # Other
